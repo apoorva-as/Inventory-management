@@ -1,0 +1,62 @@
+import type { MedicalPurchase } from "@/lib/types/medical";
+
+export const medicalPurchases: MedicalPurchase[] = [
+  {
+    id: "mpu-001",
+    vendorId: "ms-001",
+    vendorName: "MedPlus Pharma Distributors",
+    date: "2026-09-01",
+    status: "completed",
+    items: [
+      { productId: "mm-001", productName: "Paracetamol 500mg Tablets", quantity: 300, unitPrice: 1.5 },
+      { productId: "mm-009", productName: "Ibuprofen 400mg Tablets", quantity: 200, unitPrice: 1.95 },
+    ],
+    total: 840,
+  },
+  {
+    id: "mpu-002",
+    vendorId: "ms-003",
+    vendorName: "National Drug House",
+    date: "2026-09-03",
+    status: "completed",
+    items: [
+      { productId: "mm-002", productName: "Amoxicillin 500mg Capsules", quantity: 100, unitPrice: 2.9 },
+      { productId: "mm-010", productName: "Azithromycin 250mg Tablets", quantity: 80, unitPrice: 4.9 },
+    ],
+    total: 682,
+  },
+  {
+    id: "mpu-003",
+    vendorId: "ms-002",
+    vendorName: "HealthFirst Wholesale Pharma",
+    date: "2026-09-06",
+    status: "pending",
+    items: [
+      { productId: "mm-012", productName: "Insulin Glargine Injection 10ml", quantity: 25, unitPrice: 19.5 },
+    ],
+    total: 487.5,
+  },
+  {
+    id: "mpu-004",
+    vendorId: "ms-004",
+    vendorName: "CarePoint Pharma Supply",
+    date: "2026-09-08",
+    status: "completed",
+    items: [
+      { productId: "mm-006", productName: "Omeprazole 20mg Capsules", quantity: 150, unitPrice: 2.3 },
+      { productId: "mm-007", productName: "Metformin 500mg Tablets", quantity: 200, unitPrice: 1.7 },
+    ],
+    total: 685,
+  },
+  {
+    id: "mpu-005",
+    vendorId: "ms-005",
+    vendorName: "Wellness Pharma Traders",
+    date: "2026-09-09",
+    status: "cancelled",
+    items: [
+      { productId: "mm-005", productName: "Dextromethorphan Cough Syrup 100ml", quantity: 40, unitPrice: 3.2 },
+    ],
+    total: 128,
+  },
+];
