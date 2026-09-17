@@ -8,31 +8,48 @@ import type {
   MedicalMedicine,
   MedicalPrescription,
   MedicalPurchase,
+  MedicalPurchaseOrder,
+  MedicalPurchaseReturn,
   MedicalSale,
+  MedicalSalesReturn,
+  MedicalStockAdjustment,
   MedicalSupplier,
 } from "@/lib/types/medical";
+import type { OrderStatus } from "@/lib/types/shared";
 import {
   addCategory,
   addCustomer,
   addManufacturer,
   addMedicine,
+  addPrescription,
   addPurchase,
+  addPurchaseOrder,
+  addPurchaseReturn,
   addSale,
+  addSalesReturn,
+  addStockAdjustment,
   addSupplier,
+  cancelPurchaseOrder,
   deleteCategory,
   deleteCustomer,
   deleteManufacturer,
   deleteMedicine,
   deleteSupplier,
+  fulfillPrescription,
   getInitialMedicalState,
   MEDICAL_STORAGE_KEY,
+  receivePurchaseOrder,
   updateCategory,
   updateCustomer,
   updateManufacturer,
   updateMedicine,
   updatePrescriptionStatus,
+  updatePurchaseOrder,
+  updatePurchaseStatus,
+  updateSaleStatus,
   updateSupplier,
   type MedicalState,
+  type ReceivedPoLine,
 } from "@/lib/data/medicalRepository";
 import { readStorage, writeStorage } from "@/lib/utils/storage";
 
@@ -53,8 +70,19 @@ type Action =
   | { type: "UPDATE_SUPPLIER"; id: string; changes: Partial<MedicalSupplier> }
   | { type: "DELETE_SUPPLIER"; id: string }
   | { type: "ADD_PURCHASE"; purchase: MedicalPurchase }
+  | { type: "UPDATE_PURCHASE_STATUS"; id: string; status: OrderStatus }
+  | { type: "ADD_PURCHASE_ORDER"; po: MedicalPurchaseOrder }
+  | { type: "UPDATE_PURCHASE_ORDER"; id: string; changes: Partial<MedicalPurchaseOrder> }
+  | { type: "CANCEL_PURCHASE_ORDER"; id: string }
+  | { type: "RECEIVE_PURCHASE_ORDER"; poId: string; receivedLines: ReceivedPoLine[]; date: string }
   | { type: "ADD_SALE"; sale: MedicalSale }
+  | { type: "UPDATE_SALE_STATUS"; id: string; status: OrderStatus }
+  | { type: "ADD_PRESCRIPTION"; prescription: MedicalPrescription }
   | { type: "UPDATE_PRESCRIPTION_STATUS"; id: string; status: MedicalPrescription["status"] }
+  | { type: "FULFILL_PRESCRIPTION"; prescriptionId: string; saleId: string }
+  | { type: "ADD_SALES_RETURN"; ret: MedicalSalesReturn }
+  | { type: "ADD_PURCHASE_RETURN"; ret: MedicalPurchaseReturn }
+  | { type: "ADD_STOCK_ADJUSTMENT"; adjustment: MedicalStockAdjustment }
   | { type: "HYDRATE"; state: MedicalState };
 
 function reducer(state: MedicalState, action: Action): MedicalState {
@@ -91,10 +119,32 @@ function reducer(state: MedicalState, action: Action): MedicalState {
       return deleteSupplier(state, action.id);
     case "ADD_PURCHASE":
       return addPurchase(state, action.purchase);
+    case "UPDATE_PURCHASE_STATUS":
+      return updatePurchaseStatus(state, action.id, action.status);
+    case "ADD_PURCHASE_ORDER":
+      return addPurchaseOrder(state, action.po);
+    case "UPDATE_PURCHASE_ORDER":
+      return updatePurchaseOrder(state, action.id, action.changes);
+    case "CANCEL_PURCHASE_ORDER":
+      return cancelPurchaseOrder(state, action.id);
+    case "RECEIVE_PURCHASE_ORDER":
+      return receivePurchaseOrder(state, action.poId, action.receivedLines, action.date);
     case "ADD_SALE":
       return addSale(state, action.sale);
+    case "UPDATE_SALE_STATUS":
+      return updateSaleStatus(state, action.id, action.status);
+    case "ADD_PRESCRIPTION":
+      return addPrescription(state, action.prescription);
     case "UPDATE_PRESCRIPTION_STATUS":
       return updatePrescriptionStatus(state, action.id, action.status);
+    case "FULFILL_PRESCRIPTION":
+      return fulfillPrescription(state, action.prescriptionId, action.saleId);
+    case "ADD_SALES_RETURN":
+      return addSalesReturn(state, action.ret);
+    case "ADD_PURCHASE_RETURN":
+      return addPurchaseReturn(state, action.ret);
+    case "ADD_STOCK_ADJUSTMENT":
+      return addStockAdjustment(state, action.adjustment);
     case "HYDRATE":
       return { ...getInitialMedicalState(), ...action.state };
     default:
@@ -119,8 +169,19 @@ interface MedicalDataContextValue extends MedicalState {
   updateSupplier: (id: string, changes: Partial<MedicalSupplier>) => void;
   deleteSupplier: (id: string) => void;
   addPurchase: (purchase: MedicalPurchase) => void;
+  updatePurchaseStatus: (id: string, status: OrderStatus) => void;
+  addPurchaseOrder: (po: MedicalPurchaseOrder) => void;
+  updatePurchaseOrder: (id: string, changes: Partial<MedicalPurchaseOrder>) => void;
+  cancelPurchaseOrder: (id: string) => void;
+  receivePurchaseOrder: (poId: string, receivedLines: ReceivedPoLine[], date: string) => void;
   addSale: (sale: MedicalSale) => void;
+  updateSaleStatus: (id: string, status: OrderStatus) => void;
+  addPrescription: (prescription: MedicalPrescription) => void;
   updatePrescriptionStatus: (id: string, status: MedicalPrescription["status"]) => void;
+  fulfillPrescription: (prescriptionId: string, saleId: string) => void;
+  addSalesReturn: (ret: MedicalSalesReturn) => void;
+  addPurchaseReturn: (ret: MedicalPurchaseReturn) => void;
+  addStockAdjustment: (adjustment: MedicalStockAdjustment) => void;
 }
 
 const MedicalDataContext = createContext<MedicalDataContextValue | null>(null);
@@ -187,9 +248,22 @@ export function MedicalDataProvider({ children }: { children: ReactNode }) {
       updateSupplier: (id, changes) => dispatch({ type: "UPDATE_SUPPLIER", id, changes }),
       deleteSupplier: (id) => dispatch({ type: "DELETE_SUPPLIER", id }),
       addPurchase: (purchase) => dispatch({ type: "ADD_PURCHASE", purchase }),
+      updatePurchaseStatus: (id, status) => dispatch({ type: "UPDATE_PURCHASE_STATUS", id, status }),
+      addPurchaseOrder: (po) => dispatch({ type: "ADD_PURCHASE_ORDER", po }),
+      updatePurchaseOrder: (id, changes) => dispatch({ type: "UPDATE_PURCHASE_ORDER", id, changes }),
+      cancelPurchaseOrder: (id) => dispatch({ type: "CANCEL_PURCHASE_ORDER", id }),
+      receivePurchaseOrder: (poId, receivedLines, date) =>
+        dispatch({ type: "RECEIVE_PURCHASE_ORDER", poId, receivedLines, date }),
       addSale: (sale) => dispatch({ type: "ADD_SALE", sale }),
+      updateSaleStatus: (id, status) => dispatch({ type: "UPDATE_SALE_STATUS", id, status }),
+      addPrescription: (prescription) => dispatch({ type: "ADD_PRESCRIPTION", prescription }),
       updatePrescriptionStatus: (id, status) =>
         dispatch({ type: "UPDATE_PRESCRIPTION_STATUS", id, status }),
+      fulfillPrescription: (prescriptionId, saleId) =>
+        dispatch({ type: "FULFILL_PRESCRIPTION", prescriptionId, saleId }),
+      addSalesReturn: (ret) => dispatch({ type: "ADD_SALES_RETURN", ret }),
+      addPurchaseReturn: (ret) => dispatch({ type: "ADD_PURCHASE_RETURN", ret }),
+      addStockAdjustment: (adjustment) => dispatch({ type: "ADD_STOCK_ADJUSTMENT", adjustment }),
     }),
     [state],
   );

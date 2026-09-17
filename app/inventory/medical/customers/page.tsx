@@ -13,6 +13,7 @@ import { useToast } from "@/components/shared/NotificationCenter";
 import { CustomerForm, type CustomerFormOutput } from "@/components/medical/CustomerForm";
 import { useMedicalData } from "@/lib/context/MedicalDataProvider";
 import { generateId } from "@/lib/utils/id";
+import { formatCurrency } from "@/lib/utils/formatters";
 import type { MedicalCustomer } from "@/lib/types/medical";
 
 const PAGE_SIZE = 8;
@@ -98,7 +99,7 @@ export default function MedicalCustomersPage() {
       ),
     },
     { key: "totalOrders", header: "Orders", render: (c) => String(c.totalOrders) },
-    { key: "totalSpent", header: "Total Spent", render: (c) => `$${c.totalSpent.toFixed(2)}` },
+    { key: "totalSpent", header: "Total Spent", render: (c) => formatCurrency(c.totalSpent) },
     {
       key: "actions",
       header: "",

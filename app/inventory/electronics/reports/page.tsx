@@ -17,6 +17,7 @@ import { ChartWrapper } from "@/components/shared/ChartWrapper";
 import { FilterBar } from "@/components/shared/FilterBar";
 import { useElectronicsData } from "@/lib/context/ElectronicsDataProvider";
 import { getWarrantyStatus } from "@/components/electronics/WarrantyBadge";
+import { formatCurrency } from "@/lib/utils/formatters";
 import type { ElectronicsReturn } from "@/lib/types/electronics";
 
 type StockFilter = "all" | "in-stock" | "low" | "out";
@@ -224,7 +225,7 @@ export default function ElectronicsReportsPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard label="Products in Scope" value={String(filteredProducts.length)} icon={Package} />
-        <StatCard label="Stock Value" value={`$${stockValue.toFixed(2)}`} icon={DollarSign} />
+        <StatCard label="Stock Value" value={formatCurrency(stockValue)} icon={DollarSign} />
         <StatCard
           label="Low Stock Products"
           value={String(lowStockCount)}
@@ -248,14 +249,14 @@ export default function ElectronicsReportsPage() {
         />
         <StatCard
           label="Sales Revenue (completed)"
-          value={`$${completedSalesTotal.toFixed(2)}`}
+          value={formatCurrency(completedSalesTotal)}
           delta={`${filteredSales.length} sale(s) in range`}
           trend="up"
           icon={Receipt}
         />
         <StatCard
           label="Purchase Spend (completed)"
-          value={`$${completedPurchasesTotal.toFixed(2)}`}
+          value={formatCurrency(completedPurchasesTotal)}
           delta={`${filteredPurchases.length} purchase(s) in range`}
           trend="flat"
           icon={ShoppingCart}

@@ -9,6 +9,7 @@ import { DataTable, type DataTableColumn } from "@/components/shared/DataTable";
 import { Pagination } from "@/components/shared/Pagination";
 import { ExpiryBadge } from "@/components/grocery/ExpiryBadge";
 import { useGroceryData } from "@/lib/context/GroceryDataProvider";
+import { formatCurrency } from "@/lib/utils/formatters";
 import type { GroceryProduct } from "@/lib/types/grocery";
 
 const PAGE_SIZE = 10;
@@ -81,8 +82,8 @@ export default function GroceryInventoryPage() {
     { key: "unit", header: "Unit", render: (p) => (p.weight ? `${p.weight} ${p.unit}` : p.unit) },
     { key: "stock", header: "Stock", render: (p) => String(p.stockQty) },
     { key: "reorder", header: "Reorder Level", render: (p) => String(p.reorderLevel) },
-    { key: "cost", header: "Cost", render: (p) => `$${p.costPrice.toFixed(2)}` },
-    { key: "price", header: "Price", render: (p) => `$${p.price.toFixed(2)}` },
+    { key: "cost", header: "Cost", render: (p) => formatCurrency(p.costPrice) },
+    { key: "price", header: "Price", render: (p) => formatCurrency(p.price) },
     { key: "expiry", header: "Expiry", render: (p) => <ExpiryBadge expiryDate={p.expiryDate} /> },
     {
       key: "status",
@@ -98,7 +99,7 @@ export default function GroceryInventoryPage() {
     <div>
       <PageHeader
         title="Inventory"
-        description={`${products.length} products · ${totalUnits} units in stock · $${totalValue.toFixed(2)} stock value`}
+        description={`${products.length} products · ${totalUnits} units in stock · ${formatCurrency(totalValue)} stock value`}
       />
 
       <div className="mb-4">

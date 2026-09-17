@@ -1,16 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, Boxes, CalendarClock, DollarSign, Receipt, ShoppingCart } from "lucide-react";
+import { AlertTriangle, Boxes, CalendarClock, DollarSign, Receipt, Recycle, ShoppingCart } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { ChartWrapper } from "@/components/shared/ChartWrapper";
 import { FilterBar } from "@/components/shared/FilterBar";
 import { useGroceryData } from "@/lib/context/GroceryDataProvider";
-
-// Module-scope snapshot (evaluated once at load, not during render) so the
-// component body stays a pure function of its props, matching ExpiryBadge.
-const NOW = Date.now();
+import { getExpiryStatus } from "@/lib/utils/expiry";
+import { formatCurrency } from "@/lib/utils/formatters";
 
 type StockFilter = "all" | "in-stock" | "low" | "out";
 
@@ -21,7 +19,7 @@ function isInDateRange(date: string, start: string, end: string): boolean {
 }
 
 export default function GroceryReportsPage() {
-  const { products, categories, brands, purchases, sales } = useGroceryData();
+  const { products, categories, brands, purchases, sales, adjustments } = useGroceryData();
 
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -63,10 +61,18 @@ export default function GroceryReportsPage() {
   const stockValue = filteredProducts.reduce((sum, p) => sum + p.stockQty * p.costPrice, 0);
   const lowStockCount = filteredProducts.filter((p) => p.stockQty <= p.reorderLevel).length;
   const expiringCount = filteredProducts.filter((p) => {
-    if (!p.expiryDate) return false;
-    const daysLeft = Math.ceil((new Date(p.expiryDate).getTime() - NOW) / (1000 * 60 * 60 * 24));
-    return daysLeft <= 14;
+    const status = getExpiryStatus(p.expiryDate);
+    return status === "expired" || status === "expiring";
   }).length;
+
+  const filteredAdjustments = useMemo(
+    () => adjustments.filter((a) => isInDateRange(a.date, dateFrom, dateTo)),
+    [adjustments, dateFrom, dateTo],
+  );
+
+  const totalWastage = filteredAdjustments
+    .filter((a) => a.type === "decrease" && (a.reason === "Damaged" || a.reason === "Wastage"))
+    .reduce((sum, a) => sum + a.quantity, 0);
 
   const completedSalesTotal = filteredSales
     .filter((s) => s.status === "completed")
@@ -156,7 +162,7 @@ export default function GroceryReportsPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard label="Products in Scope" value={String(filteredProducts.length)} icon={Boxes} />
-        <StatCard label="Stock Value" value={`$${stockValue.toFixed(2)}`} icon={DollarSign} />
+        <StatCard label="Stock Value" value={formatCurrency(stockValue)} icon={DollarSign} />
         <StatCard
           label="Low Stock Items"
           value={String(lowStockCount)}
@@ -172,17 +178,23 @@ export default function GroceryReportsPage() {
         />
         <StatCard
           label="Sales Revenue (completed)"
-          value={`$${completedSalesTotal.toFixed(2)}`}
+          value={formatCurrency(completedSalesTotal)}
           delta={`${filteredSales.length} sale(s) in range`}
           trend="up"
           icon={Receipt}
         />
         <StatCard
           label="Purchase Spend (completed)"
-          value={`$${completedPurchasesTotal.toFixed(2)}`}
+          value={formatCurrency(completedPurchasesTotal)}
           delta={`${filteredPurchases.length} purchase(s) in range`}
           trend="flat"
           icon={ShoppingCart}
+        />
+        <StatCard
+          label="Units Wasted"
+          value={String(totalWastage)}
+          trend={totalWastage > 0 ? "down" : "flat"}
+          icon={Recycle}
         />
       </div>
 

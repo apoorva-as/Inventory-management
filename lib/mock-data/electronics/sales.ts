@@ -4,7 +4,7 @@ export const electronicsSales: ElectronicsSale[] = [
   {
     id: "esa-001",
     customerId: "ecu-001",
-    customerName: "Marcus Bell",
+    customerName: "Aditya Rao",
     date: "2026-09-02",
     status: "completed",
     items: [{ productId: "ep-001", productName: "iPhone 15 128GB", quantity: 1, unitPrice: 799 }],
@@ -25,7 +25,7 @@ export const electronicsSales: ElectronicsSale[] = [
   {
     id: "esa-003",
     customerId: "ecu-003",
-    customerName: "Jonas Weber",
+    customerName: "Vikram Sethi",
     date: "2026-09-04",
     status: "completed",
     items: [{ productId: "ep-013", productName: "Sony WH-1000XM5 Headphones", quantity: 1, unitPrice: 399 }],
@@ -34,7 +34,7 @@ export const electronicsSales: ElectronicsSale[] = [
   {
     id: "esa-004",
     customerId: "ecu-004",
-    customerName: "Aisha Rahman",
+    customerName: "Ayesha Rahman",
     date: "2026-09-05",
     status: "completed",
     items: [
@@ -46,7 +46,7 @@ export const electronicsSales: ElectronicsSale[] = [
   {
     id: "esa-005",
     customerId: "ecu-005",
-    customerName: "Diego Ramirez",
+    customerName: "Rohit Malhotra",
     date: "2026-09-06",
     status: "completed",
     items: [{ productId: "ep-014", productName: "JBL Flip 6 Portable Speaker", quantity: 1, unitPrice: 129 }],
@@ -55,7 +55,7 @@ export const electronicsSales: ElectronicsSale[] = [
   {
     id: "esa-006",
     customerId: "ecu-006",
-    customerName: "Lena Kowalski",
+    customerName: "Meera Krishnan",
     date: "2026-09-07",
     status: "completed",
     items: [
@@ -67,7 +67,7 @@ export const electronicsSales: ElectronicsSale[] = [
   {
     id: "esa-007",
     customerId: "ecu-007",
-    customerName: "Tomás Oliveira",
+    customerName: "Farhan Ansari",
     date: "2026-09-08",
     status: "completed",
     items: [{ productId: "ep-011", productName: "Lenovo ThinkPad E14 (i5/16GB/512GB)", quantity: 1, unitPrice: 899 }],
@@ -76,7 +76,7 @@ export const electronicsSales: ElectronicsSale[] = [
   {
     id: "esa-008",
     customerId: "ecu-008",
-    customerName: "Grace Okafor",
+    customerName: "Neha Bhatt",
     date: "2026-09-09",
     status: "completed",
     items: [
@@ -88,7 +88,7 @@ export const electronicsSales: ElectronicsSale[] = [
   {
     id: "esa-009",
     customerId: "ecu-001",
-    customerName: "Marcus Bell",
+    customerName: "Aditya Rao",
     date: "2026-09-10",
     status: "completed",
     items: [{ productId: "ep-026", productName: "Apple Watch Series 9 45mm", quantity: 1, unitPrice: 429 }],
@@ -106,7 +106,7 @@ export const electronicsSales: ElectronicsSale[] = [
   {
     id: "esa-011",
     customerId: "ecu-006",
-    customerName: "Lena Kowalski",
+    customerName: "Meera Krishnan",
     date: "2026-09-12",
     status: "completed",
     items: [{ productId: "ep-012", productName: "ASUS Vivobook 15 (i5/8GB/512GB)", quantity: 1, unitPrice: 629 }],
@@ -115,7 +115,7 @@ export const electronicsSales: ElectronicsSale[] = [
   {
     id: "esa-012",
     customerId: "ecu-003",
-    customerName: "Jonas Weber",
+    customerName: "Vikram Sethi",
     date: "2026-09-12",
     status: "cancelled",
     items: [{ productId: "ep-006", productName: "OnePlus 12 256GB", quantity: 1, unitPrice: 799 }],
@@ -124,7 +124,7 @@ export const electronicsSales: ElectronicsSale[] = [
   {
     id: "esa-013",
     customerId: "ecu-004",
-    customerName: "Aisha Rahman",
+    customerName: "Ayesha Rahman",
     date: "2026-09-13",
     status: "completed",
     items: [{ productId: "ep-010", productName: "HP Pavilion 15 (i5/8GB/256GB)", quantity: 1, unitPrice: 599 }],
@@ -133,7 +133,7 @@ export const electronicsSales: ElectronicsSale[] = [
   {
     id: "esa-014",
     customerId: "ecu-006",
-    customerName: "Lena Kowalski",
+    customerName: "Meera Krishnan",
     date: "2026-09-14",
     status: "completed",
     items: [{ productId: "ep-022", productName: "ASUS ProArt PA278QV 27\" Monitor", quantity: 1, unitPrice: 329 }],

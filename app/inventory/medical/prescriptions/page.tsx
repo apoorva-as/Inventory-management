@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckCircle2, Eye } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, Eye, Plus, Receipt } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/shared/Badge";
 import { SearchBar } from "@/components/shared/SearchBar";
@@ -9,8 +10,11 @@ import { FilterBar } from "@/components/shared/FilterBar";
 import { DataTable, type DataTableColumn } from "@/components/shared/DataTable";
 import { Modal } from "@/components/shared/Modal";
 import { Button } from "@/components/shared/Button";
+import { FormPanel } from "@/components/shared/FormPanel";
 import { useToast } from "@/components/shared/NotificationCenter";
+import { PrescriptionForm, type PrescriptionFormOutput } from "@/components/medical/PrescriptionForm";
 import { useMedicalData } from "@/lib/context/MedicalDataProvider";
+import { generateId } from "@/lib/utils/id";
 import type { MedicalPrescription } from "@/lib/types/medical";
 
 type StatusFilter = "all" | MedicalPrescription["status"];
@@ -21,12 +25,15 @@ const statusTone: Record<MedicalPrescription["status"], "success" | "warning"> =
 };
 
 export default function MedicalPrescriptionsPage() {
-  const { prescriptions, updatePrescriptionStatus } = useMedicalData();
+  const { prescriptions, customers, medicines, addPrescription, updatePrescriptionStatus } = useMedicalData();
   const { showToast } = useToast();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [detailsTarget, setDetailsTarget] = useState<MedicalPrescription | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+
+  const PRESCRIPTION_FORM_ID = "medical-prescription-form";
 
   const filteredPrescriptions = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -50,6 +57,12 @@ export default function MedicalPrescriptionsPage() {
     updatePrescriptionStatus(id, "fulfilled");
     showToast(`Prescription for "${customerName}" marked as fulfilled.`, "success");
     setDetailsTarget((prev) => (prev && prev.id === id ? { ...prev, status: "fulfilled" } : prev));
+  }
+
+  function handleFormSubmit(values: PrescriptionFormOutput) {
+    addPrescription({ id: generateId("mrx"), status: "pending", ...values });
+    showToast(`Prescription for "${values.customerName}" was added.`, "success");
+    setFormOpen(false);
   }
 
   const columns: DataTableColumn<MedicalPrescription>[] = [
@@ -77,13 +90,23 @@ export default function MedicalPrescriptionsPage() {
       render: (p) => (
         <div className="flex justify-end gap-1">
           {p.status === "pending" && (
-            <button
-              onClick={() => markFulfilled(p.id, p.customerName)}
-              className="rounded-lg p-1.5 text-muted hover:bg-accent-soft hover:text-accent"
-              aria-label={`Mark prescription for ${p.customerName} as fulfilled`}
-            >
-              <CheckCircle2 size={16} />
-            </button>
+            <>
+              <Link
+                href="/inventory/medical/sales"
+                className="rounded-lg p-1.5 text-muted hover:bg-accent-soft hover:text-accent"
+                aria-label={`Record a sale to fulfill prescription for ${p.customerName}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Receipt size={16} />
+              </Link>
+              <button
+                onClick={() => markFulfilled(p.id, p.customerName)}
+                className="rounded-lg p-1.5 text-muted hover:bg-accent-soft hover:text-accent"
+                aria-label={`Mark prescription for ${p.customerName} as fulfilled`}
+              >
+                <CheckCircle2 size={16} />
+              </button>
+            </>
           )}
           <button
             onClick={() => setDetailsTarget(p)}
@@ -102,6 +125,12 @@ export default function MedicalPrescriptionsPage() {
       <PageHeader
         title="Prescriptions"
         description={`${prescriptions.length} prescriptions on file`}
+        actions={
+          <Button onClick={() => setFormOpen(true)}>
+            <Plus size={16} />
+            New Prescription
+          </Button>
+        }
       />
 
       <div className="mb-4">
@@ -134,6 +163,32 @@ export default function MedicalPrescriptionsPage() {
         emptyDescription="Try a different search term or clear your filters."
       />
 
+      <FormPanel
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        title="New Prescription"
+        description="Record a new prescription on file for a patient."
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setFormOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" form={PRESCRIPTION_FORM_ID}>
+              Save Prescription
+            </Button>
+          </>
+        }
+      >
+        {formOpen && (
+          <PrescriptionForm
+            formId={PRESCRIPTION_FORM_ID}
+            customers={customers}
+            medicines={medicines}
+            onSubmit={handleFormSubmit}
+          />
+        )}
+      </FormPanel>
+
       <Modal
         open={detailsTarget !== null}
         onClose={() => setDetailsTarget(null)}
@@ -141,10 +196,18 @@ export default function MedicalPrescriptionsPage() {
         size="md"
         footer={
           detailsTarget && detailsTarget.status === "pending" ? (
-            <Button onClick={() => markFulfilled(detailsTarget.id, detailsTarget.customerName)}>
-              <CheckCircle2 size={16} />
-              Mark as Fulfilled
-            </Button>
+            <>
+              <Link href="/inventory/medical/sales">
+                <Button variant="secondary">
+                  <Receipt size={16} />
+                  Record Sale
+                </Button>
+              </Link>
+              <Button onClick={() => markFulfilled(detailsTarget.id, detailsTarget.customerName)}>
+                <CheckCircle2 size={16} />
+                Mark as Fulfilled
+              </Button>
+            </>
           ) : undefined
         }
       >
@@ -161,6 +224,11 @@ export default function MedicalPrescriptionsPage() {
               </div>
             </div>
             <Badge tone={statusTone[detailsTarget.status]}>{detailsTarget.status}</Badge>
+            {detailsTarget.fulfilledBySaleId && (
+              <p className="text-xs text-muted">
+                Fulfilled via sale {detailsTarget.fulfilledBySaleId.toUpperCase()}
+              </p>
+            )}
             <div className="overflow-hidden rounded-lg border border-border">
               <table className="w-full text-left text-sm">
                 <thead>

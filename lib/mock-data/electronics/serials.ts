@@ -15,7 +15,7 @@ export const electronicsSerials: ElectronicsSerial[] = [
     status: "sold",
     saleId: "esa-001",
     customerId: "ecu-001",
-    customerName: "Marcus Bell",
+    customerName: "Aditya Rao",
     saleDate: "2026-09-02",
   },
   {
@@ -40,7 +40,7 @@ export const electronicsSerials: ElectronicsSerial[] = [
     status: "sold",
     saleId: "esa-004",
     customerId: "ecu-004",
-    customerName: "Aisha Rahman",
+    customerName: "Ayesha Rahman",
     saleDate: "2026-09-05",
   },
   {
@@ -53,7 +53,7 @@ export const electronicsSerials: ElectronicsSerial[] = [
     status: "sold",
     saleId: "esa-006",
     customerId: "ecu-006",
-    customerName: "Lena Kowalski",
+    customerName: "Meera Krishnan",
     saleDate: "2026-09-07",
   },
   {
@@ -65,7 +65,7 @@ export const electronicsSerials: ElectronicsSerial[] = [
     status: "sold",
     saleId: "esa-006",
     customerId: "ecu-006",
-    customerName: "Lena Kowalski",
+    customerName: "Meera Krishnan",
     saleDate: "2026-09-07",
   },
   {
@@ -77,7 +77,7 @@ export const electronicsSerials: ElectronicsSerial[] = [
     status: "sold",
     saleId: "esa-007",
     customerId: "ecu-007",
-    customerName: "Tomás Oliveira",
+    customerName: "Farhan Ansari",
     saleDate: "2026-09-08",
   },
   {
@@ -89,7 +89,7 @@ export const electronicsSerials: ElectronicsSerial[] = [
     status: "sold",
     saleId: "esa-009",
     customerId: "ecu-001",
-    customerName: "Marcus Bell",
+    customerName: "Aditya Rao",
     saleDate: "2026-09-10",
   },
   {
@@ -101,7 +101,7 @@ export const electronicsSerials: ElectronicsSerial[] = [
     status: "sold",
     saleId: "esa-011",
     customerId: "ecu-006",
-    customerName: "Lena Kowalski",
+    customerName: "Meera Krishnan",
     saleDate: "2026-09-12",
   },
   {
@@ -113,7 +113,7 @@ export const electronicsSerials: ElectronicsSerial[] = [
     status: "sold",
     saleId: "esa-013",
     customerId: "ecu-004",
-    customerName: "Aisha Rahman",
+    customerName: "Ayesha Rahman",
     saleDate: "2026-09-13",
   },
   {
@@ -125,7 +125,7 @@ export const electronicsSerials: ElectronicsSerial[] = [
     status: "sold",
     saleId: "esa-014",
     customerId: "ecu-006",
-    customerName: "Lena Kowalski",
+    customerName: "Meera Krishnan",
     saleDate: "2026-09-14",
   },
 
@@ -226,7 +226,7 @@ export const electronicsSerials: ElectronicsSerial[] = [
     status: "returned",
     saleId: "esa-003",
     customerId: "ecu-003",
-    customerName: "Jonas Weber",
+    customerName: "Vikram Sethi",
     saleDate: "2026-09-04",
   },
   {

@@ -114,7 +114,7 @@ export function SupplierForm({ formId, initialSupplier, onSubmit }: SupplierForm
           className={cn(inputClass, errors.phone && "border-red-400")}
           value={values.phone}
           onChange={(e) => update("phone", e.target.value)}
-          placeholder="+1 555-0401"
+          placeholder="+91 98450-11001"
         />
         {errors.phone && <p className={errorClass}>{errors.phone}</p>}
       </div>
@@ -142,7 +142,7 @@ export function SupplierForm({ formId, initialSupplier, onSubmit }: SupplierForm
           className={inputClass}
           value={values.address}
           onChange={(e) => update("address", e.target.value)}
-          placeholder="12 Industrial Park Rd"
+          placeholder="12 MIDC Industrial Area, Pune, Maharashtra 411019"
         />
       </div>
     </form>

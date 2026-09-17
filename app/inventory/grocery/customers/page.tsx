@@ -13,6 +13,7 @@ import { useToast } from "@/components/shared/NotificationCenter";
 import { CustomerForm, type CustomerFormOutput } from "@/components/grocery/CustomerForm";
 import { useGroceryData } from "@/lib/context/GroceryDataProvider";
 import { generateId } from "@/lib/utils/id";
+import { formatCurrency } from "@/lib/utils/formatters";
 import type { GroceryCustomer } from "@/lib/types/grocery";
 
 const PAGE_SIZE = 8;
@@ -96,7 +97,7 @@ export default function GroceryCustomersPage() {
       ),
     },
     { key: "totalOrders", header: "Orders", render: (c) => String(c.totalOrders) },
-    { key: "totalSpent", header: "Total Spent", render: (c) => `$${c.totalSpent.toFixed(2)}` },
+    { key: "totalSpent", header: "Total Spent", render: (c) => formatCurrency(c.totalSpent) },
     {
       key: "actions",
       header: "",

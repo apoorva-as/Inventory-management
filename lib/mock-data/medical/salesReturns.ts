@@ -1,0 +1,40 @@
+import type { MedicalSalesReturn } from "@/lib/types/medical";
+
+export const medicalSalesReturns: MedicalSalesReturn[] = [
+  {
+    id: "msret-001",
+    saleId: "msa-001",
+    customerId: "mc-001",
+    customerName: "Priya Sharma",
+    medicineId: "mm-001",
+    medicineName: "Paracetamol 500mg Tablets",
+    quantity: 1,
+    reason: "Customer Changed Mind",
+    date: "2026-09-11",
+    restockedBatchId: "mbatch-001",
+  },
+  {
+    id: "msret-002",
+    saleId: "msa-005",
+    customerId: "mc-004",
+    customerName: "Arjun Nair",
+    medicineId: "mm-011",
+    medicineName: "ORS Rehydration Sachets",
+    quantity: 2,
+    reason: "Damaged",
+    date: "2026-09-08",
+    restockedBatchId: "mbatch-013",
+  },
+  {
+    id: "msret-003",
+    saleId: "msa-003",
+    customerId: "mc-005",
+    customerName: "Neha Kapoor",
+    medicineId: "mm-008",
+    medicineName: "Atorvastatin 10mg Tablets",
+    quantity: 1,
+    reason: "Wrong Item",
+    date: "2026-09-10",
+    restockedBatchId: "mbatch-010",
+  },
+];

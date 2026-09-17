@@ -23,3 +23,17 @@ export type GroceryCustomer = BaseCustomer;
 export type GroceryVendor = BaseVendor;
 export type GroceryPurchase = BasePurchase;
 export type GrocerySale = BaseSale;
+
+export type StockAdjustmentType = "increase" | "decrease";
+export type StockAdjustmentReason = "Damaged" | "Lost" | "Wastage" | "Stock Count" | "Manual Correction";
+
+export interface GroceryStockAdjustment {
+  id: string;
+  productId: string;
+  productName: string;
+  type: StockAdjustmentType;
+  reason: StockAdjustmentReason;
+  quantity: number;
+  date: string;
+  notes?: string;
+}

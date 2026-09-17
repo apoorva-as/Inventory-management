@@ -21,6 +21,9 @@ import {
   ScanBarcode,
   ShieldCheck,
   Undo2,
+  SlidersHorizontal,
+  Recycle,
+  ReceiptIndianRupee,
 } from "lucide-react";
 import type { Vertical } from "@/lib/types/shared";
 
@@ -28,6 +31,9 @@ export interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  /** Optional section header this item is grouped under. Verticals that omit
+   *  it on every item (Grocery, Electronics) render as a flat list, unchanged. */
+  section?: string;
 }
 
 const base = (vertical: Vertical) => `/inventory/${vertical}`;
@@ -45,24 +51,35 @@ export const groceryNav: NavItem[] = [
   { label: "Inventory", href: `${base("grocery")}/inventory`, icon: Boxes },
   { label: "Low Stock", href: `${base("grocery")}/low-stock`, icon: AlertTriangle },
   { label: "Expiry", href: `${base("grocery")}/expiry`, icon: CalendarClock },
+  { label: "Stock Adjustments", href: `${base("grocery")}/stock-adjustments`, icon: SlidersHorizontal },
+  { label: "Wastage", href: `${base("grocery")}/wastage`, icon: Recycle },
   { label: "Reports", href: `${base("grocery")}/reports`, icon: FileBarChart },
 ];
 
 export const medicalNav: NavItem[] = [
-  { label: "Dashboard", href: `${base("medical")}/dashboard`, icon: LayoutDashboard },
-  { label: "Customers", href: `${base("medical")}/customers`, icon: Users },
-  { label: "Suppliers", href: `${base("medical")}/suppliers`, icon: Truck },
-  { label: "Medicines", href: `${base("medical")}/medicines`, icon: Pill },
-  { label: "Categories", href: `${base("medical")}/categories`, icon: Tags },
-  { label: "Manufacturers", href: `${base("medical")}/manufacturers`, icon: Factory },
-  { label: "New Entry", href: `${base("medical")}/new-entry`, icon: PlusCircle },
-  { label: "Purchases", href: `${base("medical")}/purchases`, icon: ShoppingCart },
-  { label: "Sales", href: `${base("medical")}/sales`, icon: Receipt },
-  { label: "Inventory", href: `${base("medical")}/inventory`, icon: Boxes },
-  { label: "Batches", href: `${base("medical")}/batches`, icon: Layers },
-  { label: "Expiry", href: `${base("medical")}/expiry`, icon: CalendarClock },
-  { label: "Prescriptions", href: `${base("medical")}/prescriptions`, icon: ClipboardList },
-  { label: "Reports", href: `${base("medical")}/reports`, icon: FileBarChart },
+  { label: "Dashboard", href: `${base("medical")}/dashboard`, icon: LayoutDashboard, section: "Dashboard" },
+
+  { label: "Customers", href: `${base("medical")}/customers`, icon: Users, section: "Masters" },
+  { label: "Suppliers", href: `${base("medical")}/suppliers`, icon: Truck, section: "Masters" },
+  { label: "Medicines", href: `${base("medical")}/medicines`, icon: Pill, section: "Masters" },
+  { label: "Categories", href: `${base("medical")}/categories`, icon: Tags, section: "Masters" },
+  { label: "Manufacturers", href: `${base("medical")}/manufacturers`, icon: Factory, section: "Masters" },
+
+  { label: "Purchases", href: `${base("medical")}/purchases`, icon: ShoppingCart, section: "Purchasing" },
+
+  { label: "Sales", href: `${base("medical")}/sales`, icon: ReceiptIndianRupee, section: "Sales" },
+  { label: "Prescriptions", href: `${base("medical")}/prescriptions`, icon: ClipboardList, section: "Sales" },
+
+  { label: "Inventory", href: `${base("medical")}/inventory`, icon: Boxes, section: "Inventory" },
+  {
+    label: "Stock Adjustments",
+    href: `${base("medical")}/stock-adjustments`,
+    icon: SlidersHorizontal,
+    section: "Inventory",
+  },
+  { label: "Batches", href: `${base("medical")}/batches`, icon: Layers, section: "Inventory" },
+  { label: "Low Stock", href: `${base("medical")}/low-stock`, icon: AlertTriangle, section: "Inventory" },
+  { label: "Expiry", href: `${base("medical")}/expiry`, icon: CalendarClock, section: "Inventory" },
 ];
 
 export const electronicsNav: NavItem[] = [

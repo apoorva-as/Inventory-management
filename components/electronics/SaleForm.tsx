@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import type { BaseLineItem, OrderStatus } from "@/lib/types/shared";
 import type { ElectronicsCustomer, ElectronicsProduct } from "@/lib/types/electronics";
 import { cn } from "@/lib/utils/cn";
+import { formatCurrency } from "@/lib/utils/formatters";
 import { Button } from "@/components/shared/Button";
 
 export interface SaleFormOutput {
@@ -220,7 +221,7 @@ export function SaleForm({ formId, customers, products, onSubmit }: SaleFormProp
                     onChange={(e) => updateRow(row.key, { unitPrice: e.target.value })}
                   />
                 </div>
-                <p className="w-16 pb-2 text-right text-sm text-muted">${lineTotal.toFixed(2)}</p>
+                <p className="w-16 pb-2 text-right text-sm text-muted">{formatCurrency(lineTotal)}</p>
                 <button
                   type="button"
                   onClick={() => removeRow(row.key)}
@@ -239,7 +240,7 @@ export function SaleForm({ formId, customers, products, onSubmit }: SaleFormProp
 
       <div className="flex items-center justify-between rounded-lg bg-accent-soft px-3 py-2">
         <span className="text-sm font-medium text-foreground">Total</span>
-        <span className="text-base font-semibold text-accent">${total.toFixed(2)}</span>
+        <span className="text-base font-semibold text-accent">{formatCurrency(total)}</span>
       </div>
     </form>
   );

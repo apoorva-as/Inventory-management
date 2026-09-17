@@ -12,6 +12,7 @@ interface AppShellProps {
   verticalEmoji: string;
   themeClass: string;
   pageTitle?: string;
+  notificationPanel?: ReactNode;
   children: ReactNode;
 }
 
@@ -21,22 +22,23 @@ export function AppShell({
   verticalEmoji,
   themeClass,
   pageTitle,
+  notificationPanel,
   children,
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className={cn(themeClass, "flex min-h-screen bg-background")}>
-      <Sidebar
-        navItems={navItems}
-        verticalLabel={verticalLabel}
-        verticalEmoji={verticalEmoji}
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Header pageTitle={pageTitle} onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 p-4 lg:p-6">{children}</main>
+    <div className={cn(themeClass, "flex h-screen overflow-hidden bg-background")}>
+      <Sidebar navItems={navItems} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <Header
+          pageTitle={pageTitle}
+          onMenuClick={() => setSidebarOpen(true)}
+          notificationPanel={notificationPanel}
+          verticalLabel={verticalLabel}
+          verticalEmoji={verticalEmoji}
+        />
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
       </div>
     </div>
   );

@@ -1,12 +1,12 @@
 import type { ElectronicsCustomer } from "@/lib/types/electronics";
 
 export const electronicsCustomers: ElectronicsCustomer[] = [
-  { id: "ecu-001", name: "Marcus Bell", phone: "+1 555-0710", email: "marcus.bell@example.com", address: "18 Cedar St", totalOrders: 3, totalSpent: 1847.0 },
-  { id: "ecu-002", name: "Priya Nair", phone: "+1 555-0721", email: "priya.nair@example.com", address: "205 Lakeview Dr", totalOrders: 5, totalSpent: 2960.5 },
-  { id: "ecu-003", name: "Jonas Weber", phone: "+1 555-0732", email: "jonas.weber@example.com", address: "77 Birchwood Ct", totalOrders: 2, totalSpent: 748.0 },
-  { id: "ecu-004", name: "Aisha Rahman", phone: "+1 555-0743", email: "aisha.rahman@example.com", address: "12 Maple Cres", totalOrders: 4, totalSpent: 1329.0 },
-  { id: "ecu-005", name: "Diego Ramirez", phone: "+1 555-0754", email: "diego.ramirez@example.com", address: "301 Sunset Ter", totalOrders: 1, totalSpent: 129.0 },
-  { id: "ecu-006", name: "Lena Kowalski", phone: "+1 555-0765", email: "lena.kowalski@example.com", address: "9 Aspen Way", totalOrders: 6, totalSpent: 3540.0 },
-  { id: "ecu-007", name: "Tomás Oliveira", phone: "+1 555-0776", email: "tomas.oliveira@example.com", address: "44 Elmwood Ave", totalOrders: 2, totalSpent: 899.0 },
-  { id: "ecu-008", name: "Grace Okafor", phone: "+1 555-0787", email: "grace.okafor@example.com", address: "63 Meadow Ln", totalOrders: 3, totalSpent: 1078.0 },
+  { id: "ecu-001", name: "Aditya Rao", phone: "+91 98450-88001", email: "aditya.rao@example.com", address: "18 Koramangala, Bengaluru, Karnataka 560034", totalOrders: 3, totalSpent: 1847.0 },
+  { id: "ecu-002", name: "Priya Nair", phone: "+91 98220-88002", email: "priya.nair@example.com", address: "205 Bandra West, Mumbai, Maharashtra 400050", totalOrders: 5, totalSpent: 2960.5 },
+  { id: "ecu-003", name: "Vikram Sethi", phone: "+91 97170-88003", email: "vikram.sethi@example.com", address: "77 Civil Lines, Jaipur, Rajasthan 302006", totalOrders: 2, totalSpent: 748.0 },
+  { id: "ecu-004", name: "Ayesha Rahman", phone: "+91 90040-88004", email: "ayesha.rahman@example.com", address: "12 Salt Lake, Kolkata, West Bengal 700064", totalOrders: 4, totalSpent: 1329.0 },
+  { id: "ecu-005", name: "Rohit Malhotra", phone: "+91 93910-88005", email: "rohit.malhotra@example.com", address: "301 Sector 62, Noida, Uttar Pradesh 201309", totalOrders: 1, totalSpent: 129.0 },
+  { id: "ecu-006", name: "Meera Krishnan", phone: "+91 99887-88006", email: "meera.krishnan@example.com", address: "9 Anna Nagar, Chennai, Tamil Nadu 600040", totalOrders: 6, totalSpent: 3540.0 },
+  { id: "ecu-007", name: "Farhan Ansari", phone: "+91 97654-88007", email: "farhan.ansari@example.com", address: "44 Hazratganj, Lucknow, Uttar Pradesh 226001", totalOrders: 2, totalSpent: 899.0 },
+  { id: "ecu-008", name: "Neha Bhatt", phone: "+91 98980-88008", email: "neha.bhatt@example.com", address: "63 Navrangpura, Ahmedabad, Gujarat 380009", totalOrders: 3, totalSpent: 1078.0 },
 ];

@@ -6,6 +6,7 @@ import { StatCard } from "@/components/shared/StatCard";
 import { ChartWrapper } from "@/components/shared/ChartWrapper";
 import { useElectronicsData } from "@/lib/context/ElectronicsDataProvider";
 import { getWarrantyStatus } from "@/components/electronics/WarrantyBadge";
+import { formatCurrency } from "@/lib/utils/formatters";
 
 export default function ElectronicsDashboardPage() {
   const { products, customers, sales, purchases, categories, serials } = useElectronicsData();
@@ -49,14 +50,14 @@ export default function ElectronicsDashboardPage() {
         />
         <StatCard
           label="Sales Total (completed)"
-          value={`$${totalSales.toFixed(2)}`}
+          value={formatCurrency(totalSales)}
           delta={`${completedSales.length} sale(s)`}
           trend="up"
           icon={Receipt}
         />
         <StatCard
           label="Purchase Total (completed)"
-          value={`$${totalPurchases.toFixed(2)}`}
+          value={formatCurrency(totalPurchases)}
           delta={`${completedPurchases.length} purchase(s)`}
           trend="flat"
           icon={ShoppingCart}

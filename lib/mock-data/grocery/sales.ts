@@ -4,7 +4,7 @@ export const grocerySales: GrocerySale[] = [
   {
     id: "gs-001",
     customerId: "gc-001",
-    customerName: "Maria Alvarez",
+    customerName: "Anjali Mehta",
     date: "2026-09-10",
     status: "completed",
     items: [
@@ -29,7 +29,7 @@ export const grocerySales: GrocerySale[] = [
   {
     id: "gs-003",
     customerId: "gc-005",
-    customerName: "Aisha Rahman",
+    customerName: "Ayesha Siddiqui",
     date: "2026-09-09",
     status: "completed",
     items: [
@@ -41,7 +41,7 @@ export const grocerySales: GrocerySale[] = [
   {
     id: "gs-004",
     customerId: "gc-002",
-    customerName: "James Whitfield",
+    customerName: "Rahul Verma",
     date: "2026-09-08",
     status: "pending",
     items: [{ productId: "gp-011", productName: "Orange Juice", quantity: 6, unitPrice: 3.19 }],
@@ -50,7 +50,7 @@ export const grocerySales: GrocerySale[] = [
   {
     id: "gs-005",
     customerId: "gc-004",
-    customerName: "Tom Becker",
+    customerName: "Suresh Patil",
     date: "2026-09-07",
     status: "completed",
     items: [
@@ -62,7 +62,7 @@ export const grocerySales: GrocerySale[] = [
   {
     id: "gs-006",
     customerId: "gc-006",
-    customerName: "Liam O'Connor",
+    customerName: "Karan Chopra",
     date: "2026-09-05",
     status: "cancelled",
     items: [{ productId: "gp-008", productName: "Refined Wheat Flour (Maida)", quantity: 3, unitPrice: 3.29 }],

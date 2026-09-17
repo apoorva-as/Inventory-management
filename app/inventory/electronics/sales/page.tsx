@@ -15,6 +15,7 @@ import { useToast } from "@/components/shared/NotificationCenter";
 import { SaleForm, type SaleFormOutput } from "@/components/electronics/SaleForm";
 import { useElectronicsData } from "@/lib/context/ElectronicsDataProvider";
 import { generateId } from "@/lib/utils/id";
+import { formatCurrency } from "@/lib/utils/formatters";
 import type { ElectronicsSale } from "@/lib/types/electronics";
 import type { OrderStatus } from "@/lib/types/shared";
 
@@ -82,7 +83,7 @@ export default function ElectronicsSalesPage() {
     },
     { key: "customer", header: "Customer", render: (s) => s.customerName },
     { key: "items", header: "Items", render: (s) => `${s.items.length} product(s)` },
-    { key: "total", header: "Total", render: (s) => `$${s.total.toFixed(2)}` },
+    { key: "total", header: "Total", render: (s) => formatCurrency(s.total) },
     {
       key: "status",
       header: "Status",
@@ -233,9 +234,9 @@ export default function ElectronicsSalesPage() {
                     <tr key={item.productId} className="border-b border-border last:border-0">
                       <td className="px-3 py-2 text-foreground">{item.productName}</td>
                       <td className="px-3 py-2 text-foreground">{item.quantity}</td>
-                      <td className="px-3 py-2 text-foreground">${item.unitPrice.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-foreground">{formatCurrency(item.unitPrice)}</td>
                       <td className="px-3 py-2 text-right text-foreground">
-                        ${(item.quantity * item.unitPrice).toFixed(2)}
+                        {formatCurrency(item.quantity * item.unitPrice)}
                       </td>
                     </tr>
                   ))}
@@ -244,7 +245,7 @@ export default function ElectronicsSalesPage() {
             </div>
             <div className="flex items-center justify-between rounded-lg bg-accent-soft px-3 py-2">
               <span className="text-sm font-medium text-foreground">Total</span>
-              <span className="text-base font-semibold text-accent">${detailsTarget.total.toFixed(2)}</span>
+              <span className="text-base font-semibold text-accent">{formatCurrency(detailsTarget.total)}</span>
             </div>
           </div>
         )}

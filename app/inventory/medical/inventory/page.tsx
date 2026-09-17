@@ -7,9 +7,10 @@ import { SearchBar } from "@/components/shared/SearchBar";
 import { FilterBar } from "@/components/shared/FilterBar";
 import { DataTable, type DataTableColumn } from "@/components/shared/DataTable";
 import { Pagination } from "@/components/shared/Pagination";
-import { MedicalExpiryBadge } from "@/components/medical/MedicalExpiryBadge";
 import { PrescriptionRequiredBadge } from "@/components/medical/PrescriptionRequiredBadge";
 import { useMedicalData } from "@/lib/context/MedicalDataProvider";
+import { getMedicineActiveBatches, getMedicineTotalStock, isLowStock } from "@/lib/utils/medicalStock";
+import { formatCurrency } from "@/lib/utils/formatters";
 import type { MedicalMedicine } from "@/lib/types/medical";
 
 const PAGE_SIZE = 10;
@@ -17,14 +18,8 @@ const PAGE_SIZE = 10;
 type StockFilter = "all" | "in-stock" | "low" | "out";
 type RxFilter = "all" | "required" | "otc";
 
-function stockStatus(m: MedicalMedicine): { label: string; tone: "success" | "warning" | "danger" } {
-  if (m.stockQty === 0) return { label: "Out of Stock", tone: "danger" };
-  if (m.stockQty <= m.reorderLevel) return { label: "Low Stock", tone: "warning" };
-  return { label: "In Stock", tone: "success" };
-}
-
 export default function MedicalInventoryPage() {
-  const { medicines, categories, manufacturers } = useMedicalData();
+  const { medicines, batches, categories, manufacturers } = useMedicalData();
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -36,6 +31,12 @@ export default function MedicalInventoryPage() {
   const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? "Uncategorized";
   const manufacturerName = (id: string) => manufacturers.find((m) => m.id === id)?.name ?? "—";
 
+  function stockStatus(stock: number, minimumStock: number): { label: string; tone: "success" | "warning" | "danger" } {
+    if (stock === 0) return { label: "Out of Stock", tone: "danger" };
+    if (isLowStock(stock, minimumStock)) return { label: "Low Stock", tone: "warning" };
+    return { label: "In Stock", tone: "success" };
+  }
+
   const filteredMedicines = useMemo(() => {
     const term = search.trim().toLowerCase();
     return medicines.filter((m) => {
@@ -43,7 +44,8 @@ export default function MedicalInventoryPage() {
         !term || m.name.toLowerCase().includes(term) || m.genericName.toLowerCase().includes(term);
       const matchesCategory = !categoryFilter || m.categoryId === categoryFilter;
       const matchesManufacturer = !manufacturerFilter || m.manufacturerId === manufacturerFilter;
-      const status = stockStatus(m);
+      const stock = getMedicineTotalStock(batches, m.id);
+      const status = stockStatus(stock, m.minimumStock);
       const matchesStock =
         stockFilter === "all" ||
         (stockFilter === "in-stock" && status.label === "In Stock") ||
@@ -55,7 +57,7 @@ export default function MedicalInventoryPage() {
         (rxFilter === "otc" && !m.prescriptionRequired);
       return matchesSearch && matchesCategory && matchesManufacturer && matchesStock && matchesRx;
     });
-  }, [medicines, search, categoryFilter, manufacturerFilter, stockFilter, rxFilter]);
+  }, [medicines, batches, search, categoryFilter, manufacturerFilter, stockFilter, rxFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredMedicines.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -70,8 +72,11 @@ export default function MedicalInventoryPage() {
     setPage(1);
   }
 
-  const totalUnits = medicines.reduce((sum, m) => sum + m.stockQty, 0);
-  const totalValue = medicines.reduce((sum, m) => sum + m.stockQty * m.costPrice, 0);
+  const totalUnits = medicines.reduce((sum, m) => sum + getMedicineTotalStock(batches, m.id), 0);
+  const totalValue = medicines.reduce(
+    (sum, m) => sum + getMedicineTotalStock(batches, m.id) * m.purchasePrice,
+    0,
+  );
 
   const columns: DataTableColumn<MedicalMedicine>[] = [
     {
@@ -86,11 +91,14 @@ export default function MedicalInventoryPage() {
     },
     { key: "category", header: "Category", render: (m) => categoryName(m.categoryId) },
     { key: "manufacturer", header: "Manufacturer", render: (m) => manufacturerName(m.manufacturerId) },
-    { key: "batch", header: "Batch", render: (m) => m.batchNumber },
-    { key: "stock", header: "Stock", render: (m) => String(m.stockQty) },
-    { key: "reorder", header: "Reorder Level", render: (m) => String(m.reorderLevel) },
-    { key: "mrp", header: "MRP", render: (m) => `$${m.mrp.toFixed(2)}` },
-    { key: "expiry", header: "Expiry", render: (m) => <MedicalExpiryBadge expiryDate={m.expiryDate} /> },
+    {
+      key: "batches",
+      header: "Batches",
+      render: (m) => String(getMedicineActiveBatches(batches, m.id).length),
+    },
+    { key: "stock", header: "Stock", render: (m) => String(getMedicineTotalStock(batches, m.id)) },
+    { key: "minimum", header: "Minimum Stock", render: (m) => String(m.minimumStock) },
+    { key: "mrp", header: "MRP", render: (m) => formatCurrency(m.mrp) },
     {
       key: "rx",
       header: "Rx",
@@ -100,7 +108,7 @@ export default function MedicalInventoryPage() {
       key: "status",
       header: "Status",
       render: (m) => {
-        const status = stockStatus(m);
+        const status = stockStatus(getMedicineTotalStock(batches, m.id), m.minimumStock);
         return <Badge tone={status.tone}>{status.label}</Badge>;
       },
     },
@@ -110,7 +118,7 @@ export default function MedicalInventoryPage() {
     <div>
       <PageHeader
         title="Inventory"
-        description={`${medicines.length} medicines · ${totalUnits} units in stock · $${totalValue.toFixed(2)} stock value`}
+        description={`${medicines.length} medicines · ${totalUnits} units in stock · ${formatCurrency(totalValue)} stock value`}
       />
 
       <div className="mb-4">

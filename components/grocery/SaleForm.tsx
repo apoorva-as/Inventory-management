@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import type { BaseLineItem, OrderStatus } from "@/lib/types/shared";
 import type { GroceryCustomer, GroceryProduct } from "@/lib/types/grocery";
 import { cn } from "@/lib/utils/cn";
+import { formatCurrency } from "@/lib/utils/formatters";
 import { Button } from "@/components/shared/Button";
 
 export interface SaleFormOutput {
@@ -80,8 +81,21 @@ export function SaleForm({ formId, customers, products, onSubmit }: SaleFormProp
     if (!date) nextErrors.date = "Select a date.";
 
     const validRows = rows.filter((r) => r.productId && Number(r.quantity) > 0 && r.unitPrice !== "");
-    if (validRows.length === 0)
+    if (validRows.length === 0) {
       nextErrors.items = "Add at least one product with a quantity and unit price.";
+    } else {
+      const requestedByProductId = new Map<string, number>();
+      for (const r of validRows) {
+        requestedByProductId.set(r.productId, (requestedByProductId.get(r.productId) ?? 0) + Number(r.quantity));
+      }
+      for (const [productId, requestedQty] of requestedByProductId) {
+        const product = products.find((p) => p.id === productId);
+        if (product && requestedQty > product.stockQty) {
+          nextErrors.items = `Cannot sell more than available stock for "${product.name}" (${product.stockQty} in stock).`;
+          break;
+        }
+      }
+    }
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -182,6 +196,7 @@ export function SaleForm({ formId, customers, products, onSubmit }: SaleFormProp
         <div className="space-y-2">
           {rows.map((row) => {
             const lineTotal = (Number(row.quantity) || 0) * (Number(row.unitPrice) || 0);
+            const rowProduct = products.find((p) => p.id === row.productId);
             return (
               <div key={row.key} className="flex items-end gap-2 rounded-lg border border-border p-2">
                 <div className="flex-1">
@@ -194,7 +209,7 @@ export function SaleForm({ formId, customers, products, onSubmit }: SaleFormProp
                     <option value="">Select product</option>
                     {products.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.name}
+                        {p.name} ({p.stockQty} in stock)
                       </option>
                     ))}
                   </select>
@@ -204,6 +219,7 @@ export function SaleForm({ formId, customers, products, onSubmit }: SaleFormProp
                   <input
                     type="number"
                     min="1"
+                    max={rowProduct?.stockQty}
                     className={inputClass}
                     value={row.quantity}
                     onChange={(e) => updateRow(row.key, { quantity: e.target.value })}
@@ -220,7 +236,7 @@ export function SaleForm({ formId, customers, products, onSubmit }: SaleFormProp
                     onChange={(e) => updateRow(row.key, { unitPrice: e.target.value })}
                   />
                 </div>
-                <p className="w-16 pb-2 text-right text-sm text-muted">${lineTotal.toFixed(2)}</p>
+                <p className="w-16 pb-2 text-right text-sm text-muted">{formatCurrency(lineTotal)}</p>
                 <button
                   type="button"
                   onClick={() => removeRow(row.key)}
@@ -239,7 +255,7 @@ export function SaleForm({ formId, customers, products, onSubmit }: SaleFormProp
 
       <div className="flex items-center justify-between rounded-lg bg-accent-soft px-3 py-2">
         <span className="text-sm font-medium text-foreground">Total</span>
-        <span className="text-base font-semibold text-accent">${total.toFixed(2)}</span>
+        <span className="text-base font-semibold text-accent">{formatCurrency(total)}</span>
       </div>
     </form>
   );

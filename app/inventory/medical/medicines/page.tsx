@@ -13,10 +13,11 @@ import { FormPanel } from "@/components/shared/FormPanel";
 import { Modal } from "@/components/shared/Modal";
 import { useToast } from "@/components/shared/NotificationCenter";
 import { MedicineForm, type MedicineFormOutput } from "@/components/medical/MedicineForm";
-import { MedicalExpiryBadge } from "@/components/medical/MedicalExpiryBadge";
 import { PrescriptionRequiredBadge } from "@/components/medical/PrescriptionRequiredBadge";
 import { useMedicalData } from "@/lib/context/MedicalDataProvider";
 import { generateId } from "@/lib/utils/id";
+import { getMedicineTotalStock, isLowStock } from "@/lib/utils/medicalStock";
+import { formatCurrency } from "@/lib/utils/formatters";
 import type { MedicalMedicine } from "@/lib/types/medical";
 
 const PAGE_SIZE = 8;
@@ -26,7 +27,7 @@ type StockFilter = "all" | "low" | "out";
 type RxFilter = "all" | "required" | "otc";
 
 export default function MedicalMedicinesPage() {
-  const { medicines, categories, manufacturers, addMedicine, updateMedicine, deleteMedicine } =
+  const { medicines, batches, categories, manufacturers, addMedicine, updateMedicine, deleteMedicine } =
     useMedicalData();
   const { showToast } = useToast();
 
@@ -50,21 +51,23 @@ export default function MedicalMedicinesPage() {
         !term ||
         m.name.toLowerCase().includes(term) ||
         m.genericName.toLowerCase().includes(term) ||
-        m.batchNumber.toLowerCase().includes(term) ||
-        m.sku.toLowerCase().includes(term);
+        (m.brandName ?? "").toLowerCase().includes(term) ||
+        m.sku.toLowerCase().includes(term) ||
+        (m.barcode ?? "").toLowerCase().includes(term);
       const matchesCategory = !categoryFilter || m.categoryId === categoryFilter;
       const matchesManufacturer = !manufacturerFilter || m.manufacturerId === manufacturerFilter;
+      const stock = getMedicineTotalStock(batches, m.id);
       const matchesStock =
         stockFilter === "all" ||
-        (stockFilter === "low" && m.stockQty > 0 && m.stockQty <= m.reorderLevel) ||
-        (stockFilter === "out" && m.stockQty === 0);
+        (stockFilter === "low" && stock > 0 && isLowStock(stock, m.minimumStock)) ||
+        (stockFilter === "out" && stock === 0);
       const matchesRx =
         rxFilter === "all" ||
         (rxFilter === "required" && m.prescriptionRequired) ||
         (rxFilter === "otc" && !m.prescriptionRequired);
       return matchesSearch && matchesCategory && matchesManufacturer && matchesStock && matchesRx;
     });
-  }, [medicines, search, categoryFilter, manufacturerFilter, stockFilter, rxFilter]);
+  }, [medicines, batches, search, categoryFilter, manufacturerFilter, stockFilter, rxFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredMedicines.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -110,24 +113,31 @@ export default function MedicalMedicinesPage() {
     },
     { key: "manufacturer", header: "Manufacturer", render: (m) => manufacturerName(m.manufacturerId) },
     { key: "category", header: "Category", render: (m) => categoryName(m.categoryId) },
-    { key: "batch", header: "Batch", render: (m) => m.batchNumber },
-    { key: "mrp", header: "MRP", render: (m) => `$${m.mrp.toFixed(2)}` },
+    { key: "form", header: "Form", render: (m) => `${m.dosageForm} · ${m.strength}` },
+    { key: "mrp", header: "MRP", render: (m) => formatCurrency(m.mrp) },
     {
       key: "stock",
       header: "Stock",
-      render: (m) => (
-        <div className="flex items-center gap-2">
-          <span>{m.stockQty}</span>
-          {m.stockQty === 0 && <Badge tone="danger">Out</Badge>}
-          {m.stockQty > 0 && m.stockQty <= m.reorderLevel && <Badge tone="warning">Low</Badge>}
-        </div>
-      ),
+      render: (m) => {
+        const stock = getMedicineTotalStock(batches, m.id);
+        return (
+          <div className="flex items-center gap-2">
+            <span>{stock}</span>
+            {stock === 0 && <Badge tone="danger">Out</Badge>}
+            {stock > 0 && isLowStock(stock, m.minimumStock) && <Badge tone="warning">Low</Badge>}
+          </div>
+        );
+      },
     },
-    { key: "expiry", header: "Expiry", render: (m) => <MedicalExpiryBadge expiryDate={m.expiryDate} /> },
     {
       key: "rx",
       header: "Rx",
       render: (m) => <PrescriptionRequiredBadge required={m.prescriptionRequired} />,
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (m) => <Badge tone={m.active ? "success" : "neutral"}>{m.active ? "Active" : "Inactive"}</Badge>,
     },
     {
       key: "actions",
@@ -174,7 +184,7 @@ export default function MedicalMedicinesPage() {
             setSearch(e.target.value);
             setPage(1);
           }}
-          placeholder="Search by name, generic name, batch, or SKU..."
+          placeholder="Search by name, generic name, brand, SKU, or barcode..."
           containerClassName="max-w-md"
         />
       </div>
@@ -250,7 +260,7 @@ export default function MedicalMedicinesPage() {
         open={panel !== null}
         onClose={() => setPanel(null)}
         title={panel?.mode === "edit" ? "Edit Medicine" : "Add Medicine"}
-        description="Enter the medicine's details for your pharmacy catalog."
+        description="Enter the medicine's catalog details. Stock is tracked separately per batch."
         footer={
           <>
             <Button variant="secondary" onClick={() => setPanel(null)}>

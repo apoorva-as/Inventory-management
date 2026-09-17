@@ -8,6 +8,7 @@ import type {
   GroceryProduct,
   GroceryPurchase,
   GrocerySale,
+  GroceryStockAdjustment,
   GroceryVendor,
 } from "@/lib/types/grocery";
 import {
@@ -17,6 +18,7 @@ import {
   addProduct,
   addPurchase,
   addSale,
+  addStockAdjustment,
   addVendor,
   deleteBrand,
   deleteCategory,
@@ -52,6 +54,7 @@ type Action =
   | { type: "DELETE_VENDOR"; id: string }
   | { type: "ADD_PURCHASE"; purchase: GroceryPurchase }
   | { type: "ADD_SALE"; sale: GrocerySale }
+  | { type: "ADD_STOCK_ADJUSTMENT"; adjustment: GroceryStockAdjustment }
   | { type: "HYDRATE"; state: GroceryState };
 
 function reducer(state: GroceryState, action: Action): GroceryState {
@@ -90,6 +93,8 @@ function reducer(state: GroceryState, action: Action): GroceryState {
       return addPurchase(state, action.purchase);
     case "ADD_SALE":
       return addSale(state, action.sale);
+    case "ADD_STOCK_ADJUSTMENT":
+      return addStockAdjustment(state, action.adjustment);
     case "HYDRATE":
       return { ...getInitialGroceryState(), ...action.state };
     default:
@@ -115,6 +120,7 @@ interface GroceryDataContextValue extends GroceryState {
   deleteVendor: (id: string) => void;
   addPurchase: (purchase: GroceryPurchase) => void;
   addSale: (sale: GrocerySale) => void;
+  addStockAdjustment: (adjustment: GroceryStockAdjustment) => void;
 }
 
 const GroceryDataContext = createContext<GroceryDataContextValue | null>(null);
@@ -182,6 +188,7 @@ export function GroceryDataProvider({ children }: { children: ReactNode }) {
       deleteVendor: (id) => dispatch({ type: "DELETE_VENDOR", id }),
       addPurchase: (purchase) => dispatch({ type: "ADD_PURCHASE", purchase }),
       addSale: (sale) => dispatch({ type: "ADD_SALE", sale }),
+      addStockAdjustment: (adjustment) => dispatch({ type: "ADD_STOCK_ADJUSTMENT", adjustment }),
     }),
     [state],
   );

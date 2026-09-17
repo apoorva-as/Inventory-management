@@ -16,6 +16,7 @@ import { ProductForm, type ProductFormOutput } from "@/components/grocery/Produc
 import { ExpiryBadge } from "@/components/grocery/ExpiryBadge";
 import { useGroceryData } from "@/lib/context/GroceryDataProvider";
 import { generateId } from "@/lib/utils/id";
+import { formatCurrency } from "@/lib/utils/formatters";
 import type { GroceryProduct } from "@/lib/types/grocery";
 
 const PAGE_SIZE = 8;
@@ -116,7 +117,7 @@ export default function GroceryProductsPage() {
         </div>
       ),
     },
-    { key: "price", header: "Price", render: (p) => `$${p.price.toFixed(2)}` },
+    { key: "price", header: "Price", render: (p) => formatCurrency(p.price) },
     { key: "expiry", header: "Expiry", render: (p) => <ExpiryBadge expiryDate={p.expiryDate} /> },
     {
       key: "actions",

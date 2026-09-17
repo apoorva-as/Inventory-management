@@ -83,7 +83,7 @@ export function CustomerForm({ formId, initialCustomer, onSubmit }: CustomerForm
           className={cn(inputClass, errors.name && "border-red-400")}
           value={values.name}
           onChange={(e) => update("name", e.target.value)}
-          placeholder="e.g. Marcus Bell"
+          placeholder="e.g. Aditya Rao"
         />
         {errors.name && <p className={errorClass}>{errors.name}</p>}
       </div>
@@ -97,7 +97,7 @@ export function CustomerForm({ formId, initialCustomer, onSubmit }: CustomerForm
           className={cn(inputClass, errors.phone && "border-red-400")}
           value={values.phone}
           onChange={(e) => update("phone", e.target.value)}
-          placeholder="+1 555-0710"
+          placeholder="+91 98450-88001"
         />
         {errors.phone && <p className={errorClass}>{errors.phone}</p>}
       </div>
@@ -125,7 +125,7 @@ export function CustomerForm({ formId, initialCustomer, onSubmit }: CustomerForm
           className={inputClass}
           value={values.address}
           onChange={(e) => update("address", e.target.value)}
-          placeholder="18 Cedar St"
+          placeholder="18 Koramangala, Bengaluru, Karnataka 560034"
         />
       </div>
     </form>

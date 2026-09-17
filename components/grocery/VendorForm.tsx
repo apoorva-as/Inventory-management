@@ -101,7 +101,7 @@ export function VendorForm({ formId, initialVendor, onSubmit }: VendorFormProps)
           className={inputClass}
           value={values.contactPerson}
           onChange={(e) => update("contactPerson", e.target.value)}
-          placeholder="e.g. Rachel Kim"
+          placeholder="e.g. Rakesh Kumar"
         />
       </div>
 
@@ -114,7 +114,7 @@ export function VendorForm({ formId, initialVendor, onSubmit }: VendorFormProps)
           className={cn(inputClass, errors.phone && "border-red-400")}
           value={values.phone}
           onChange={(e) => update("phone", e.target.value)}
-          placeholder="+1 555-0201"
+          placeholder="+91 98450-77001"
         />
         {errors.phone && <p className={errorClass}>{errors.phone}</p>}
       </div>
@@ -142,7 +142,7 @@ export function VendorForm({ formId, initialVendor, onSubmit }: VendorFormProps)
           className={inputClass}
           value={values.address}
           onChange={(e) => update("address", e.target.value)}
-          placeholder="400 Industrial Rd"
+          placeholder="400 MIDC Industrial Area, Pune, Maharashtra 411019"
         />
       </div>
     </form>

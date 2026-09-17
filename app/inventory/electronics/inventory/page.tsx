@@ -9,6 +9,7 @@ import { DataTable, type DataTableColumn } from "@/components/shared/DataTable";
 import { Pagination } from "@/components/shared/Pagination";
 import { SerialImeiBadge } from "@/components/electronics/SerialImeiBadge";
 import { useElectronicsData } from "@/lib/context/ElectronicsDataProvider";
+import { formatCurrency } from "@/lib/utils/formatters";
 import type { ElectronicsProduct } from "@/lib/types/electronics";
 
 const PAGE_SIZE = 10;
@@ -88,8 +89,8 @@ export default function ElectronicsInventoryPage() {
     { key: "category", header: "Category", render: (p) => categoryName(p.categoryId) },
     { key: "stock", header: "Stock", render: (p) => String(p.stockQty) },
     { key: "reorder", header: "Reorder Level", render: (p) => String(p.reorderLevel) },
-    { key: "cost", header: "Purchase Price", render: (p) => `$${p.costPrice.toFixed(2)}` },
-    { key: "price", header: "Selling Price", render: (p) => `$${p.price.toFixed(2)}` },
+    { key: "cost", header: "Purchase Price", render: (p) => formatCurrency(p.costPrice) },
+    { key: "price", header: "Selling Price", render: (p) => formatCurrency(p.price) },
     { key: "warranty", header: "Warranty", render: (p) => `${p.warrantyMonths} mo` },
     { key: "tracking", header: "Tracking", render: (p) => <SerialImeiBadge product={p} /> },
     {
@@ -106,7 +107,7 @@ export default function ElectronicsInventoryPage() {
     <div>
       <PageHeader
         title="Inventory"
-        description={`${products.length} products · ${totalUnits} units in stock · $${totalValue.toFixed(2)} stock value`}
+        description={`${products.length} products · ${totalUnits} units in stock · ${formatCurrency(totalValue)} stock value`}
       />
 
       <div className="mb-4">

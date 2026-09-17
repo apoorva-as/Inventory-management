@@ -13,6 +13,7 @@ import { useToast } from "@/components/shared/NotificationCenter";
 import { CustomerForm, type CustomerFormOutput } from "@/components/electronics/CustomerForm";
 import { useElectronicsData } from "@/lib/context/ElectronicsDataProvider";
 import { generateId } from "@/lib/utils/id";
+import { formatCurrency } from "@/lib/utils/formatters";
 import type { ElectronicsCustomer } from "@/lib/types/electronics";
 
 const PAGE_SIZE = 8;
@@ -98,7 +99,7 @@ export default function ElectronicsCustomersPage() {
       ),
     },
     { key: "totalOrders", header: "Orders", render: (c) => String(c.totalOrders) },
-    { key: "totalSpent", header: "Total Spent", render: (c) => `$${c.totalSpent.toFixed(2)}` },
+    { key: "totalSpent", header: "Total Spent", render: (c) => formatCurrency(c.totalSpent) },
     {
       key: "actions",
       header: "",

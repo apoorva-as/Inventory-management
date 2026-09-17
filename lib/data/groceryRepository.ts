@@ -5,8 +5,11 @@ import type {
   GroceryProduct,
   GroceryPurchase,
   GrocerySale,
+  GroceryStockAdjustment,
   GroceryVendor,
 } from "@/lib/types/grocery";
+import type { BaseLineItem } from "@/lib/types/shared";
+import { groceryAdjustments } from "@/lib/mock-data/grocery/adjustments";
 import { groceryBrands } from "@/lib/mock-data/grocery/brands";
 import { groceryCategories } from "@/lib/mock-data/grocery/categories";
 import { groceryCustomers } from "@/lib/mock-data/grocery/customers";
@@ -25,6 +28,7 @@ export interface GroceryState {
   brands: GroceryBrand[];
   purchases: GroceryPurchase[];
   sales: GrocerySale[];
+  adjustments: GroceryStockAdjustment[];
 }
 
 /**
@@ -40,7 +44,29 @@ export function getInitialGroceryState(): GroceryState {
     brands: groceryBrands,
     purchases: groceryPurchases,
     sales: grocerySales,
+    adjustments: groceryAdjustments,
   };
+}
+
+/**
+ * Applies quantity deltas from a purchase/sale's line items to matching
+ * products' stockQty, floored at 0. `sign` is +1 for purchases (stock in)
+ * and -1 for sales (stock out).
+ */
+function applyStockDeltas(
+  products: GroceryProduct[],
+  items: BaseLineItem[],
+  sign: 1 | -1,
+): GroceryProduct[] {
+  const deltaByProductId = new Map<string, number>();
+  for (const item of items) {
+    deltaByProductId.set(item.productId, (deltaByProductId.get(item.productId) ?? 0) + item.quantity);
+  }
+  return products.map((p) => {
+    const delta = deltaByProductId.get(p.id);
+    if (!delta) return p;
+    return { ...p, stockQty: Math.max(0, p.stockQty + sign * delta) };
+  });
 }
 
 export function addProduct(state: GroceryState, product: GroceryProduct): GroceryState {
@@ -139,9 +165,26 @@ export function deleteVendor(state: GroceryState, id: string): GroceryState {
 }
 
 export function addPurchase(state: GroceryState, purchase: GroceryPurchase): GroceryState {
-  return { ...state, purchases: [purchase, ...state.purchases] };
+  const products =
+    purchase.status === "completed"
+      ? applyStockDeltas(state.products, purchase.items, 1)
+      : state.products;
+  return { ...state, products, purchases: [purchase, ...state.purchases] };
 }
 
 export function addSale(state: GroceryState, sale: GrocerySale): GroceryState {
-  return { ...state, sales: [sale, ...state.sales] };
+  const products =
+    sale.status === "completed" ? applyStockDeltas(state.products, sale.items, -1) : state.products;
+  return { ...state, products, sales: [sale, ...state.sales] };
+}
+
+export function addStockAdjustment(
+  state: GroceryState,
+  adjustment: GroceryStockAdjustment,
+): GroceryState {
+  const sign = adjustment.type === "increase" ? 1 : -1;
+  const products = state.products.map((p) =>
+    p.id === adjustment.productId ? { ...p, stockQty: Math.max(0, p.stockQty + sign * adjustment.quantity) } : p,
+  );
+  return { ...state, products, adjustments: [adjustment, ...state.adjustments] };
 }

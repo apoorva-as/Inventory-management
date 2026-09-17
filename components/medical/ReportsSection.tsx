@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { AlertTriangle, CalendarClock, ClipboardList, DollarSign, Pill, Receipt, ShoppingCart } from "lucide-react";
-import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { ChartWrapper } from "@/components/shared/ChartWrapper";
 import { FilterBar } from "@/components/shared/FilterBar";
 import { useMedicalData } from "@/lib/context/MedicalDataProvider";
-import { getMedicalExpiryStatus } from "@/components/medical/MedicalExpiryBadge";
+import { getBatchExpiryStatus, getMedicineTotalStock, isLowStock } from "@/lib/utils/medicalStock";
+import { formatCurrency } from "@/lib/utils/formatters";
 
 type StockFilter = "all" | "in-stock" | "low" | "out";
 type RxFilter = "all" | "required" | "otc";
@@ -18,8 +18,8 @@ function isInDateRange(date: string, start: string, end: string): boolean {
   return true;
 }
 
-export default function MedicalReportsPage() {
-  const { medicines, categories, manufacturers, purchases, sales, prescriptions } = useMedicalData();
+export function ReportsSection() {
+  const { medicines, batches, categories, manufacturers, purchases, sales, prescriptions } = useMedicalData();
 
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -41,18 +41,26 @@ export default function MedicalReportsPage() {
     return medicines.filter((m) => {
       const matchesCategory = !categoryFilter || m.categoryId === categoryFilter;
       const matchesManufacturer = !manufacturerFilter || m.manufacturerId === manufacturerFilter;
+      const stock = getMedicineTotalStock(batches, m.id);
       const matchesStock =
         stockFilter === "all" ||
-        (stockFilter === "out" && m.stockQty === 0) ||
-        (stockFilter === "low" && m.stockQty > 0 && m.stockQty <= m.reorderLevel) ||
-        (stockFilter === "in-stock" && m.stockQty > m.reorderLevel);
+        (stockFilter === "out" && stock === 0) ||
+        (stockFilter === "low" && stock > 0 && isLowStock(stock, m.minimumStock)) ||
+        (stockFilter === "in-stock" && stock > 0 && !isLowStock(stock, m.minimumStock));
       const matchesRx =
         rxFilter === "all" ||
         (rxFilter === "required" && m.prescriptionRequired) ||
         (rxFilter === "otc" && !m.prescriptionRequired);
       return matchesCategory && matchesManufacturer && matchesStock && matchesRx;
     });
-  }, [medicines, categoryFilter, manufacturerFilter, stockFilter, rxFilter]);
+  }, [medicines, batches, categoryFilter, manufacturerFilter, stockFilter, rxFilter]);
+
+  const filteredMedicineIds = useMemo(() => new Set(filteredMedicines.map((m) => m.id)), [filteredMedicines]);
+
+  const filteredBatches = useMemo(
+    () => batches.filter((b) => filteredMedicineIds.has(b.medicineId)),
+    [batches, filteredMedicineIds],
+  );
 
   const filteredSales = useMemo(
     () => sales.filter((s) => isInDateRange(s.date, dateFrom, dateTo)),
@@ -69,11 +77,16 @@ export default function MedicalReportsPage() {
     [prescriptions, dateFrom, dateTo],
   );
 
-  const stockValue = filteredMedicines.reduce((sum, m) => sum + m.stockQty * m.costPrice, 0);
-  const lowStockCount = filteredMedicines.filter((m) => m.stockQty <= m.reorderLevel).length;
-  const expiredCount = filteredMedicines.filter((m) => getMedicalExpiryStatus(m.expiryDate) === "expired").length;
-  const expiringCount = filteredMedicines.filter(
-    (m) => getMedicalExpiryStatus(m.expiryDate) === "expiring",
+  const stockValue = filteredMedicines.reduce(
+    (sum, m) => sum + getMedicineTotalStock(batches, m.id) * m.purchasePrice,
+    0,
+  );
+  const lowStockCount = filteredMedicines.filter((m) =>
+    isLowStock(getMedicineTotalStock(batches, m.id), m.minimumStock),
+  ).length;
+  const expiredCount = filteredBatches.filter((b) => b.quantity > 0 && getBatchExpiryStatus(b) === "expired").length;
+  const expiringCount = filteredBatches.filter(
+    (b) => b.quantity > 0 && getBatchExpiryStatus(b) === "expiring",
   ).length;
   const rxRequiredCount = filteredMedicines.filter((m) => m.prescriptionRequired).length;
 
@@ -101,7 +114,7 @@ export default function MedicalReportsPage() {
       value: Number(
         filteredMedicines
           .filter((m) => m.categoryId === c.id)
-          .reduce((sum, m) => sum + m.stockQty * m.costPrice, 0)
+          .reduce((sum, m) => sum + getMedicineTotalStock(batches, m.id) * m.purchasePrice, 0)
           .toFixed(2),
       ),
     }))
@@ -109,8 +122,6 @@ export default function MedicalReportsPage() {
 
   return (
     <div>
-      <PageHeader title="Reports" description="Business performance across your pharmacy" />
-
       <FilterBar onClear={resetFilters}>
         <input
           type="date"
@@ -174,7 +185,7 @@ export default function MedicalReportsPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard label="Medicines in Scope" value={String(filteredMedicines.length)} icon={Pill} />
-        <StatCard label="Stock Value" value={`$${stockValue.toFixed(2)}`} icon={DollarSign} />
+        <StatCard label="Stock Value" value={formatCurrency(stockValue)} icon={DollarSign} />
         <StatCard
           label="Low Stock Medicines"
           value={String(lowStockCount)}
@@ -183,7 +194,7 @@ export default function MedicalReportsPage() {
           icon={AlertTriangle}
         />
         <StatCard
-          label="Expired Medicines"
+          label="Expired Batches"
           value={String(expiredCount)}
           trend={expiredCount > 0 ? "down" : "up"}
           icon={CalendarClock}
@@ -197,14 +208,14 @@ export default function MedicalReportsPage() {
         <StatCard label="Prescription-Required" value={String(rxRequiredCount)} icon={ClipboardList} />
         <StatCard
           label="Sales Revenue (completed)"
-          value={`$${completedSalesTotal.toFixed(2)}`}
+          value={formatCurrency(completedSalesTotal)}
           delta={`${filteredSales.length} sale(s) in range`}
           trend="up"
           icon={Receipt}
         />
         <StatCard
           label="Purchase Spend (completed)"
-          value={`$${completedPurchasesTotal.toFixed(2)}`}
+          value={formatCurrency(completedPurchasesTotal)}
           delta={`${filteredPurchases.length} purchase(s) in range`}
           trend="flat"
           icon={ShoppingCart}

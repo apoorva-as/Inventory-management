@@ -16,6 +16,7 @@ import { ProductForm, type ProductFormOutput } from "@/components/electronics/Pr
 import { SerialImeiBadge } from "@/components/electronics/SerialImeiBadge";
 import { useElectronicsData } from "@/lib/context/ElectronicsDataProvider";
 import { generateId } from "@/lib/utils/id";
+import { formatCurrency } from "@/lib/utils/formatters";
 import type { ElectronicsProduct } from "@/lib/types/electronics";
 
 const PAGE_SIZE = 8;
@@ -127,7 +128,7 @@ export default function ElectronicsProductsPage() {
     { key: "brand", header: "Brand", render: (p) => brandName(p.brandId) },
     { key: "model", header: "Model", render: (p) => modelName(p.modelId) },
     { key: "category", header: "Category", render: (p) => categoryName(p.categoryId) },
-    { key: "price", header: "Price", render: (p) => `$${p.price.toFixed(2)}` },
+    { key: "price", header: "Price", render: (p) => formatCurrency(p.price) },
     {
       key: "stock",
       header: "Stock",

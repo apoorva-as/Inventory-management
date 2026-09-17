@@ -296,7 +296,7 @@ export function ProductForm({
       <div className="grid grid-cols-3 gap-3">
         <div>
           <label className={labelClass} htmlFor="product-price">
-            Selling Price ($) *
+            Selling Price (₹) *
           </label>
           <input
             id="product-price"
@@ -311,7 +311,7 @@ export function ProductForm({
         </div>
         <div>
           <label className={labelClass} htmlFor="product-cost">
-            Purchase Price ($) *
+            Purchase Price (₹) *
           </label>
           <input
             id="product-cost"

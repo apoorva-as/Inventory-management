@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
 
 interface StatCardProps {
@@ -8,11 +9,19 @@ interface StatCardProps {
   delta?: string;
   trend?: "up" | "down" | "flat";
   icon?: LucideIcon;
+  /** When provided, the whole card becomes a link to this route. */
+  href?: string;
 }
 
-export function StatCard({ label, value, delta, trend = "flat", icon: Icon }: StatCardProps) {
-  return (
-    <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+export function StatCard({ label, value, delta, trend = "flat", icon: Icon, href }: StatCardProps) {
+  const className = cn(
+    "block rounded-xl border border-border bg-surface p-4 shadow-sm",
+    href &&
+      "cursor-pointer transition-colors hover:border-accent hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2",
+  );
+
+  const content = (
+    <>
       <div className="flex items-start justify-between">
         <p className="text-sm text-muted">{label}</p>
         {Icon && (
@@ -36,6 +45,16 @@ export function StatCard({ label, value, delta, trend = "flat", icon: Icon }: St
           {delta}
         </p>
       )}
-    </div>
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={className}>{content}</div>;
 }

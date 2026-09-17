@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/shared/AppShell";
 import { MedicalDataProvider } from "@/lib/context/MedicalDataProvider";
+import { NotificationsPanel } from "@/components/medical/NotificationsPanel";
 import { medicalNav } from "@/lib/config/navigation";
 import { verticalThemes } from "@/lib/config/theme";
 
@@ -16,6 +17,7 @@ export default function MedicalLayout({ children }: { children: ReactNode }) {
         verticalLabel={theme.label}
         verticalEmoji={theme.emoji}
         themeClass={theme.themeClass}
+        notificationPanel={<NotificationsPanel />}
       >
         {children}
       </AppShell>

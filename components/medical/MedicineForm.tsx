@@ -7,53 +7,62 @@ import { cn } from "@/lib/utils/cn";
 export interface MedicineFormOutput {
   name: string;
   genericName: string;
+  brandName?: string;
   sku: string;
+  barcode?: string;
   categoryId: string;
   manufacturerId: string;
-  batchNumber: string;
-  manufacturingDate: string;
-  expiryDate: string;
+  dosageForm: string;
+  strength: string;
+  packSize: string;
+  unit: string;
+  purchasePrice: number;
+  sellingPrice: number;
   mrp: number;
-  price: number;
-  costPrice: number;
-  stockQty: number;
-  reorderLevel: number;
+  minimumStock: number;
   prescriptionRequired: boolean;
+  active: boolean;
 }
 
 interface FormState {
   name: string;
   genericName: string;
+  brandName: string;
   sku: string;
+  barcode: string;
   categoryId: string;
   manufacturerId: string;
-  batchNumber: string;
-  manufacturingDate: string;
-  expiryDate: string;
+  dosageForm: string;
+  strength: string;
+  packSize: string;
+  unit: string;
+  purchasePrice: string;
+  sellingPrice: string;
   mrp: string;
-  price: string;
-  costPrice: string;
-  stockQty: string;
-  reorderLevel: string;
+  minimumStock: string;
   prescriptionRequired: boolean;
+  active: boolean;
 }
 
 function toFormState(medicine?: MedicalMedicine): FormState {
   return {
     name: medicine?.name ?? "",
     genericName: medicine?.genericName ?? "",
+    brandName: medicine?.brandName ?? "",
     sku: medicine?.sku ?? "",
+    barcode: medicine?.barcode ?? "",
     categoryId: medicine?.categoryId ?? "",
     manufacturerId: medicine?.manufacturerId ?? "",
-    batchNumber: medicine?.batchNumber ?? "",
-    manufacturingDate: medicine?.manufacturingDate ?? "",
-    expiryDate: medicine?.expiryDate ?? "",
+    dosageForm: medicine?.dosageForm ?? "",
+    strength: medicine?.strength ?? "",
+    packSize: medicine?.packSize ?? "",
+    unit: medicine?.unit ?? "",
+    purchasePrice: medicine?.purchasePrice != null ? String(medicine.purchasePrice) : "",
+    sellingPrice: medicine?.sellingPrice != null ? String(medicine.sellingPrice) : "",
     mrp: medicine?.mrp != null ? String(medicine.mrp) : "",
-    price: medicine?.price != null ? String(medicine.price) : "",
-    costPrice: medicine?.costPrice != null ? String(medicine.costPrice) : "",
-    stockQty: medicine?.stockQty != null ? String(medicine.stockQty) : "",
-    reorderLevel: medicine?.reorderLevel != null ? String(medicine.reorderLevel) : "",
+    minimumStock: medicine?.minimumStock != null ? String(medicine.minimumStock) : "",
     prescriptionRequired: medicine?.prescriptionRequired ?? false,
+    active: medicine?.active ?? true,
   };
 }
 
@@ -92,27 +101,20 @@ export function MedicineForm({
     if (!values.sku.trim()) nextErrors.sku = "SKU is required.";
     if (!values.categoryId) nextErrors.categoryId = "Select a category.";
     if (!values.manufacturerId) nextErrors.manufacturerId = "Select a manufacturer.";
-    if (!values.batchNumber.trim()) nextErrors.batchNumber = "Batch number is required.";
-    if (!values.manufacturingDate) nextErrors.manufacturingDate = "Manufacturing date is required.";
-    if (!values.expiryDate) nextErrors.expiryDate = "Expiry date is required.";
-    if (
-      values.manufacturingDate &&
-      values.expiryDate &&
-      values.expiryDate <= values.manufacturingDate
-    ) {
-      nextErrors.expiryDate = "Expiry date must be after the manufacturing date.";
-    }
+    if (!values.dosageForm.trim()) nextErrors.dosageForm = "Dosage form is required.";
+    if (!values.strength.trim()) nextErrors.strength = "Strength is required.";
+    if (!values.packSize.trim()) nextErrors.packSize = "Pack size is required.";
+    if (!values.unit.trim()) nextErrors.unit = "Unit is required.";
     if (values.mrp === "" || Number(values.mrp) < 0) nextErrors.mrp = "Enter a valid MRP.";
-    if (values.price === "" || Number(values.price) < 0) nextErrors.price = "Enter a valid selling price.";
-    if (values.price !== "" && values.mrp !== "" && Number(values.price) > Number(values.mrp)) {
-      nextErrors.price = "Selling price can't exceed MRP.";
+    if (values.sellingPrice === "" || Number(values.sellingPrice) < 0)
+      nextErrors.sellingPrice = "Enter a valid selling price.";
+    if (values.sellingPrice !== "" && values.mrp !== "" && Number(values.sellingPrice) > Number(values.mrp)) {
+      nextErrors.sellingPrice = "Selling price can't exceed MRP.";
     }
-    if (values.costPrice === "" || Number(values.costPrice) < 0)
-      nextErrors.costPrice = "Enter a valid purchase price.";
-    if (values.stockQty === "" || Number(values.stockQty) < 0)
-      nextErrors.stockQty = "Enter a valid stock quantity.";
-    if (values.reorderLevel === "" || Number(values.reorderLevel) < 0)
-      nextErrors.reorderLevel = "Enter a valid reorder level.";
+    if (values.purchasePrice === "" || Number(values.purchasePrice) < 0)
+      nextErrors.purchasePrice = "Enter a valid purchase price.";
+    if (values.minimumStock === "" || Number(values.minimumStock) < 0)
+      nextErrors.minimumStock = "Enter a valid minimum stock.";
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -125,18 +127,21 @@ export function MedicineForm({
     onSubmit({
       name: values.name.trim(),
       genericName: values.genericName.trim(),
+      brandName: values.brandName.trim() || undefined,
       sku: values.sku.trim(),
+      barcode: values.barcode.trim() || undefined,
       categoryId: values.categoryId,
       manufacturerId: values.manufacturerId,
-      batchNumber: values.batchNumber.trim(),
-      manufacturingDate: values.manufacturingDate,
-      expiryDate: values.expiryDate,
+      dosageForm: values.dosageForm.trim(),
+      strength: values.strength.trim(),
+      packSize: values.packSize.trim(),
+      unit: values.unit.trim(),
+      purchasePrice: Number(values.purchasePrice),
+      sellingPrice: Number(values.sellingPrice),
       mrp: Number(values.mrp),
-      price: Number(values.price),
-      costPrice: Number(values.costPrice),
-      stockQty: Number(values.stockQty),
-      reorderLevel: Number(values.reorderLevel),
+      minimumStock: Number(values.minimumStock),
       prescriptionRequired: values.prescriptionRequired,
+      active: values.active,
     });
   }
 
@@ -171,6 +176,21 @@ export function MedicineForm({
           {errors.genericName && <p className={errorClass}>{errors.genericName}</p>}
         </div>
         <div>
+          <label className={labelClass} htmlFor="medicine-brand">
+            Brand Name
+          </label>
+          <input
+            id="medicine-brand"
+            className={inputClass}
+            value={values.brandName}
+            onChange={(e) => update("brandName", e.target.value)}
+            placeholder="Optional"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
           <label className={labelClass} htmlFor="medicine-sku">
             SKU *
           </label>
@@ -182,6 +202,18 @@ export function MedicineForm({
             placeholder="MED-PARA-500"
           />
           {errors.sku && <p className={errorClass}>{errors.sku}</p>}
+        </div>
+        <div>
+          <label className={labelClass} htmlFor="medicine-barcode">
+            Barcode
+          </label>
+          <input
+            id="medicine-barcode"
+            className={inputClass}
+            value={values.barcode}
+            onChange={(e) => update("barcode", e.target.value)}
+            placeholder="Optional"
+          />
         </div>
       </div>
 
@@ -226,53 +258,68 @@ export function MedicineForm({
         </div>
       </div>
 
-      <div>
-        <label className={labelClass} htmlFor="medicine-batch">
-          Batch Number *
-        </label>
-        <input
-          id="medicine-batch"
-          className={cn(inputClass, errors.batchNumber && "border-red-400")}
-          value={values.batchNumber}
-          onChange={(e) => update("batchNumber", e.target.value)}
-          placeholder="BN-24A017"
-        />
-        {errors.batchNumber && <p className={errorClass}>{errors.batchNumber}</p>}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass} htmlFor="medicine-dosage-form">
+            Dosage Form *
+          </label>
+          <input
+            id="medicine-dosage-form"
+            className={cn(inputClass, errors.dosageForm && "border-red-400")}
+            value={values.dosageForm}
+            onChange={(e) => update("dosageForm", e.target.value)}
+            placeholder="Tablet, Capsule, Syrup..."
+          />
+          {errors.dosageForm && <p className={errorClass}>{errors.dosageForm}</p>}
+        </div>
+        <div>
+          <label className={labelClass} htmlFor="medicine-strength">
+            Strength *
+          </label>
+          <input
+            id="medicine-strength"
+            className={cn(inputClass, errors.strength && "border-red-400")}
+            value={values.strength}
+            onChange={(e) => update("strength", e.target.value)}
+            placeholder="500mg"
+          />
+          {errors.strength && <p className={errorClass}>{errors.strength}</p>}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelClass} htmlFor="medicine-mfg-date">
-            Manufacturing Date *
+          <label className={labelClass} htmlFor="medicine-pack-size">
+            Pack Size *
           </label>
           <input
-            id="medicine-mfg-date"
-            type="date"
-            className={cn(inputClass, errors.manufacturingDate && "border-red-400")}
-            value={values.manufacturingDate}
-            onChange={(e) => update("manufacturingDate", e.target.value)}
+            id="medicine-pack-size"
+            className={cn(inputClass, errors.packSize && "border-red-400")}
+            value={values.packSize}
+            onChange={(e) => update("packSize", e.target.value)}
+            placeholder="10x10"
           />
-          {errors.manufacturingDate && <p className={errorClass}>{errors.manufacturingDate}</p>}
+          {errors.packSize && <p className={errorClass}>{errors.packSize}</p>}
         </div>
         <div>
-          <label className={labelClass} htmlFor="medicine-expiry-date">
-            Expiry Date *
+          <label className={labelClass} htmlFor="medicine-unit">
+            Unit *
           </label>
           <input
-            id="medicine-expiry-date"
-            type="date"
-            className={cn(inputClass, errors.expiryDate && "border-red-400")}
-            value={values.expiryDate}
-            onChange={(e) => update("expiryDate", e.target.value)}
+            id="medicine-unit"
+            className={cn(inputClass, errors.unit && "border-red-400")}
+            value={values.unit}
+            onChange={(e) => update("unit", e.target.value)}
+            placeholder="Strip"
           />
-          {errors.expiryDate && <p className={errorClass}>{errors.expiryDate}</p>}
+          {errors.unit && <p className={errorClass}>{errors.unit}</p>}
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div>
           <label className={labelClass} htmlFor="medicine-mrp">
-            MRP ($) *
+            MRP (₹) *
           </label>
           <input
             id="medicine-mrp"
@@ -286,77 +333,75 @@ export function MedicineForm({
           {errors.mrp && <p className={errorClass}>{errors.mrp}</p>}
         </div>
         <div>
-          <label className={labelClass} htmlFor="medicine-price">
-            Selling Price ($) *
+          <label className={labelClass} htmlFor="medicine-selling-price">
+            Selling Price (₹) *
           </label>
           <input
-            id="medicine-price"
+            id="medicine-selling-price"
             type="number"
             step="0.01"
             min="0"
-            className={cn(inputClass, errors.price && "border-red-400")}
-            value={values.price}
-            onChange={(e) => update("price", e.target.value)}
+            className={cn(inputClass, errors.sellingPrice && "border-red-400")}
+            value={values.sellingPrice}
+            onChange={(e) => update("sellingPrice", e.target.value)}
           />
-          {errors.price && <p className={errorClass}>{errors.price}</p>}
+          {errors.sellingPrice && <p className={errorClass}>{errors.sellingPrice}</p>}
         </div>
         <div>
-          <label className={labelClass} htmlFor="medicine-cost">
-            Purchase Price ($) *
+          <label className={labelClass} htmlFor="medicine-purchase-price">
+            Purchase Price (₹) *
           </label>
           <input
-            id="medicine-cost"
+            id="medicine-purchase-price"
             type="number"
             step="0.01"
             min="0"
-            className={cn(inputClass, errors.costPrice && "border-red-400")}
-            value={values.costPrice}
-            onChange={(e) => update("costPrice", e.target.value)}
+            className={cn(inputClass, errors.purchasePrice && "border-red-400")}
+            value={values.purchasePrice}
+            onChange={(e) => update("purchasePrice", e.target.value)}
           />
-          {errors.costPrice && <p className={errorClass}>{errors.costPrice}</p>}
+          {errors.purchasePrice && <p className={errorClass}>{errors.purchasePrice}</p>}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass} htmlFor="medicine-stock">
-            Stock Quantity *
-          </label>
-          <input
-            id="medicine-stock"
-            type="number"
-            min="0"
-            className={cn(inputClass, errors.stockQty && "border-red-400")}
-            value={values.stockQty}
-            onChange={(e) => update("stockQty", e.target.value)}
-          />
-          {errors.stockQty && <p className={errorClass}>{errors.stockQty}</p>}
-        </div>
-        <div>
-          <label className={labelClass} htmlFor="medicine-reorder">
-            Reorder Level *
-          </label>
-          <input
-            id="medicine-reorder"
-            type="number"
-            min="0"
-            className={cn(inputClass, errors.reorderLevel && "border-red-400")}
-            value={values.reorderLevel}
-            onChange={(e) => update("reorderLevel", e.target.value)}
-          />
-          {errors.reorderLevel && <p className={errorClass}>{errors.reorderLevel}</p>}
-        </div>
-      </div>
-
-      <label className="flex items-center gap-2 text-sm text-foreground">
+      <div>
+        <label className={labelClass} htmlFor="medicine-minimum-stock">
+          Minimum Stock *
+        </label>
         <input
-          type="checkbox"
-          checked={values.prescriptionRequired}
-          onChange={(e) => update("prescriptionRequired", e.target.checked)}
-          className="h-4 w-4 rounded border-border accent-accent"
+          id="medicine-minimum-stock"
+          type="number"
+          min="0"
+          className={cn(inputClass, errors.minimumStock && "border-red-400")}
+          value={values.minimumStock}
+          onChange={(e) => update("minimumStock", e.target.value)}
         />
-        Prescription required to dispense
-      </label>
+        {errors.minimumStock && <p className={errorClass}>{errors.minimumStock}</p>}
+        <p className="mt-1 text-xs text-muted">
+          Stock on hand is tracked per batch — see the Batches page. This is only the reorder threshold.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            checked={values.prescriptionRequired}
+            onChange={(e) => update("prescriptionRequired", e.target.checked)}
+            className="h-4 w-4 rounded border-border accent-accent"
+          />
+          Prescription required to dispense
+        </label>
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            checked={values.active}
+            onChange={(e) => update("active", e.target.checked)}
+            className="h-4 w-4 rounded border-border accent-accent"
+          />
+          Active (available for purchase &amp; sale)
+        </label>
+      </div>
     </form>
   );
 }

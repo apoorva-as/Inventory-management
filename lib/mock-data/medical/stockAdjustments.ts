@@ -1,0 +1,40 @@
+import type { MedicalStockAdjustment } from "@/lib/types/medical";
+
+export const medicalStockAdjustments: MedicalStockAdjustment[] = [
+  {
+    id: "madj-001",
+    medicineId: "mm-006",
+    medicineName: "Omeprazole 20mg Capsules",
+    batchId: "mbatch-008",
+    batchNumber: "BN-24F034",
+    type: "decrease",
+    quantity: 10,
+    reason: "Expired",
+    date: "2026-09-12",
+    notes: "Removed expired stock during count.",
+  },
+  {
+    id: "madj-002",
+    medicineId: "mm-003",
+    medicineName: "Cetirizine 10mg Tablets",
+    batchId: "mbatch-004",
+    batchNumber: "BN-24C045",
+    type: "increase",
+    quantity: 15,
+    reason: "Stock Count",
+    date: "2026-09-13",
+    notes: "Physical count found extra sealed strips.",
+  },
+  {
+    id: "madj-003",
+    medicineId: "mm-009",
+    medicineName: "Ibuprofen 400mg Tablets",
+    batchId: "mbatch-011",
+    batchNumber: "BN-24I098",
+    type: "decrease",
+    quantity: 5,
+    reason: "Damaged",
+    date: "2026-09-14",
+    notes: "Blister packs crushed in storage.",
+  },
+];

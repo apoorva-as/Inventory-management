@@ -8,45 +8,38 @@ import { FilterBar } from "@/components/shared/FilterBar";
 import { DataTable, type DataTableColumn } from "@/components/shared/DataTable";
 import { Pagination } from "@/components/shared/Pagination";
 import { Modal } from "@/components/shared/Modal";
-import {
-  MedicalExpiryBadge,
-  getMedicalExpiryStatus,
-  type MedicalExpiryStatus,
-} from "@/components/medical/MedicalExpiryBadge";
+import { MedicalExpiryBadge } from "@/components/medical/MedicalExpiryBadge";
 import { useMedicalData } from "@/lib/context/MedicalDataProvider";
-import type { MedicalMedicine } from "@/lib/types/medical";
+import { getBatchExpiryStatus } from "@/lib/utils/medicalStock";
+import { formatCurrency } from "@/lib/utils/formatters";
+import type { ExpiryStatus } from "@/lib/utils/expiry";
+import type { MedicalBatch } from "@/lib/types/medical";
 
 const PAGE_SIZE = 10;
 
-type ExpiryFilter = "all" | MedicalExpiryStatus;
+type ExpiryFilter = "all" | ExpiryStatus;
 
 export default function MedicalBatchesPage() {
-  const { medicines, categories, manufacturers } = useMedicalData();
+  const { batches, medicines, suppliers } = useMedicalData();
 
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [manufacturerFilter, setManufacturerFilter] = useState("");
+  const [medicineFilter, setMedicineFilter] = useState("");
+  const [supplierFilter, setSupplierFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<ExpiryFilter>("all");
   const [page, setPage] = useState(1);
-  const [detailsTarget, setDetailsTarget] = useState<MedicalMedicine | null>(null);
-
-  const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? "Uncategorized";
-  const manufacturerName = (id: string) => manufacturers.find((m) => m.id === id)?.name ?? "—";
+  const [detailsTarget, setDetailsTarget] = useState<MedicalBatch | null>(null);
 
   const filteredBatches = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return medicines.filter((m) => {
+    return batches.filter((b) => {
       const matchesSearch =
-        !term ||
-        m.name.toLowerCase().includes(term) ||
-        m.genericName.toLowerCase().includes(term) ||
-        m.batchNumber.toLowerCase().includes(term);
-      const matchesCategory = !categoryFilter || m.categoryId === categoryFilter;
-      const matchesManufacturer = !manufacturerFilter || m.manufacturerId === manufacturerFilter;
-      const matchesStatus = statusFilter === "all" || getMedicalExpiryStatus(m.expiryDate) === statusFilter;
-      return matchesSearch && matchesCategory && matchesManufacturer && matchesStatus;
+        !term || b.medicineName.toLowerCase().includes(term) || b.batchNumber.toLowerCase().includes(term);
+      const matchesMedicine = !medicineFilter || b.medicineId === medicineFilter;
+      const matchesSupplier = !supplierFilter || b.supplierId === supplierFilter;
+      const matchesStatus = statusFilter === "all" || getBatchExpiryStatus(b) === statusFilter;
+      return matchesSearch && matchesMedicine && matchesSupplier && matchesStatus;
     });
-  }, [medicines, search, categoryFilter, manufacturerFilter, statusFilter]);
+  }, [batches, search, medicineFilter, supplierFilter, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredBatches.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -54,44 +47,42 @@ export default function MedicalBatchesPage() {
 
   function resetFilters() {
     setSearch("");
-    setCategoryFilter("");
-    setManufacturerFilter("");
+    setMedicineFilter("");
+    setSupplierFilter("");
     setStatusFilter("all");
     setPage(1);
   }
 
-  const columns: DataTableColumn<MedicalMedicine>[] = [
+  const columns: DataTableColumn<MedicalBatch>[] = [
     {
       key: "medicine",
       header: "Medicine",
-      render: (m) => (
-        <div>
-          <p className="font-medium text-foreground">{m.name}</p>
-          <p className="text-xs text-muted">{m.genericName}</p>
-        </div>
-      ),
+      render: (b) => <p className="font-medium text-foreground">{b.medicineName}</p>,
     },
-    { key: "batch", header: "Batch Number", render: (m) => m.batchNumber },
-    { key: "category", header: "Category", render: (m) => categoryName(m.categoryId) },
-    { key: "manufacturer", header: "Manufacturer", render: (m) => manufacturerName(m.manufacturerId) },
-    { key: "mfgDate", header: "Mfg. Date", render: (m) => m.manufacturingDate },
-    { key: "stock", header: "Stock", render: (m) => String(m.stockQty) },
-    { key: "mrp", header: "MRP", render: (m) => `$${m.mrp.toFixed(2)}` },
+    { key: "batch", header: "Batch Number", render: (b) => b.batchNumber },
+    { key: "supplier", header: "Supplier", render: (b) => b.supplierName },
+    { key: "mfgDate", header: "Mfg. Date", render: (b) => b.manufacturingDate },
+    { key: "stock", header: "Stock", render: (b) => String(b.quantity) },
+    {
+      key: "mrp",
+      header: "MRP",
+      render: (b) => (b.mrp != null ? formatCurrency(b.mrp) : "—"),
+    },
     {
       key: "status",
       header: "Batch Status",
-      render: (m) => <MedicalExpiryBadge expiryDate={m.expiryDate} />,
+      render: (b) => <MedicalExpiryBadge expiryDate={b.expiryDate} />,
     },
     {
       key: "actions",
       header: "",
       className: "text-right",
-      render: (m) => (
+      render: (b) => (
         <div className="flex justify-end">
           <button
-            onClick={() => setDetailsTarget(m)}
+            onClick={() => setDetailsTarget(b)}
             className="rounded-lg p-1.5 text-muted hover:bg-accent-soft hover:text-accent"
-            aria-label={`View batch ${m.batchNumber}`}
+            aria-label={`View batch ${b.batchNumber}`}
           >
             <Eye size={16} />
           </button>
@@ -102,7 +93,7 @@ export default function MedicalBatchesPage() {
 
   return (
     <div>
-      <PageHeader title="Batches" description={`${medicines.length} tracked medicine batches`} />
+      <PageHeader title="Batches" description={`${batches.length} tracked stock lots`} />
 
       <div className="mb-4">
         <SearchBar
@@ -111,39 +102,39 @@ export default function MedicalBatchesPage() {
             setSearch(e.target.value);
             setPage(1);
           }}
-          placeholder="Search by medicine, generic name, or batch number..."
+          placeholder="Search by medicine or batch number..."
           containerClassName="max-w-md"
         />
       </div>
 
       <FilterBar onClear={resetFilters}>
         <select
-          value={categoryFilter}
+          value={medicineFilter}
           onChange={(e) => {
-            setCategoryFilter(e.target.value);
+            setMedicineFilter(e.target.value);
             setPage(1);
           }}
           className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm outline-none focus:border-accent"
         >
-          <option value="">All Categories</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
+          <option value="">All Medicines</option>
+          {medicines.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
             </option>
           ))}
         </select>
         <select
-          value={manufacturerFilter}
+          value={supplierFilter}
           onChange={(e) => {
-            setManufacturerFilter(e.target.value);
+            setSupplierFilter(e.target.value);
             setPage(1);
           }}
           className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm outline-none focus:border-accent"
         >
-          <option value="">All Manufacturers</option>
-          {manufacturers.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name}
+          <option value="">All Suppliers</option>
+          {suppliers.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
             </option>
           ))}
         </select>
@@ -165,8 +156,8 @@ export default function MedicalBatchesPage() {
       <DataTable
         columns={columns}
         rows={pagedBatches}
-        getRowKey={(m) => m.id}
-        onRowClick={(m) => setDetailsTarget(m)}
+        getRowKey={(b) => b.id}
+        onRowClick={(b) => setDetailsTarget(b)}
         emptyTitle="No batches found"
         emptyDescription="Try a different search term or clear your filters."
       />
@@ -183,21 +174,11 @@ export default function MedicalBatchesPage() {
           <div className="space-y-3 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-muted">Medicine</span>
-              <span className="font-medium text-foreground">{detailsTarget.name}</span>
+              <span className="font-medium text-foreground">{detailsTarget.medicineName}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted">Generic Name</span>
-              <span className="font-medium text-foreground">{detailsTarget.genericName}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted">Manufacturer</span>
-              <span className="font-medium text-foreground">
-                {manufacturerName(detailsTarget.manufacturerId)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted">Category</span>
-              <span className="font-medium text-foreground">{categoryName(detailsTarget.categoryId)}</span>
+              <span className="text-muted">Supplier</span>
+              <span className="font-medium text-foreground">{detailsTarget.supplierName}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted">Batch Number</span>
@@ -213,12 +194,18 @@ export default function MedicalBatchesPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted">Stock on Hand</span>
-              <span className="font-medium text-foreground">{detailsTarget.stockQty}</span>
+              <span className="font-medium text-foreground">{detailsTarget.quantity}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted">MRP</span>
-              <span className="font-medium text-foreground">${detailsTarget.mrp.toFixed(2)}</span>
+              <span className="text-muted">Purchase Price</span>
+              <span className="font-medium text-foreground">{formatCurrency(detailsTarget.purchasePrice)}</span>
             </div>
+            {detailsTarget.mrp != null && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted">MRP</span>
+                <span className="font-medium text-foreground">{formatCurrency(detailsTarget.mrp)}</span>
+              </div>
+            )}
           </div>
         )}
       </Modal>

@@ -9,23 +9,11 @@ import { Pagination } from "@/components/shared/Pagination";
 import { ExpiryBadge } from "@/components/grocery/ExpiryBadge";
 import { useGroceryData } from "@/lib/context/GroceryDataProvider";
 import type { GroceryProduct } from "@/lib/types/grocery";
+import { getExpiryStatus, type ExpiryStatus } from "@/lib/utils/expiry";
 
 const PAGE_SIZE = 10;
 
-// Module-scope snapshot (evaluated once at load, not during render) so the
-// component body stays a pure function of its props, matching ExpiryBadge.
-const NOW = Date.now();
-
-type ExpiryStatus = "expired" | "expiring" | "healthy" | "none";
 type ExpiryFilter = "all" | ExpiryStatus;
-
-function getExpiryStatus(p: GroceryProduct): ExpiryStatus {
-  if (!p.expiryDate) return "none";
-  const daysLeft = Math.ceil((new Date(p.expiryDate).getTime() - NOW) / (1000 * 60 * 60 * 24));
-  if (daysLeft < 0) return "expired";
-  if (daysLeft <= 14) return "expiring";
-  return "healthy";
-}
 
 export default function GroceryExpiryPage() {
   const { products, categories } = useGroceryData();
@@ -38,7 +26,7 @@ export default function GroceryExpiryPage() {
 
   const expiryCounts = useMemo(() => {
     const counts = { expired: 0, expiring: 0, healthy: 0, none: 0 };
-    for (const p of products) counts[getExpiryStatus(p)] += 1;
+    for (const p of products) counts[getExpiryStatus(p.expiryDate)] += 1;
     return counts;
   }, [products]);
 
@@ -46,7 +34,7 @@ export default function GroceryExpiryPage() {
     const term = search.trim().toLowerCase();
     return products.filter((p) => {
       const matchesSearch = !term || p.name.toLowerCase().includes(term) || p.sku.toLowerCase().includes(term);
-      const matchesStatus = statusFilter === "all" || getExpiryStatus(p) === statusFilter;
+      const matchesStatus = statusFilter === "all" || getExpiryStatus(p.expiryDate) === statusFilter;
       return matchesSearch && matchesStatus;
     });
   }, [products, search, statusFilter]);

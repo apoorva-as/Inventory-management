@@ -45,6 +45,9 @@ Make each vertical feel like a real, working, industry-specific inventory produc
   3. Applies that vertical's accent color theme (from `lib/config/theme.ts`).
   4. Mounts that vertical's `DataProvider` (Context + `useReducer`) so all pages within the vertical share one in-memory data store for the session.
 - **Shared design system**: one Tailwind-based visual language (spacing, radii, shadows, typography, table/card/modal styles) used by every shared component. Only the accent color token changes per vertical — components themselves are not duplicated per vertical.
+- **Vertical branding (emoji + name) lives in the top header, not the sidebar.** `AppShell` passes each layout's `verticalLabel`/`verticalEmoji` straight through to `Header`, which renders it next to the mobile menu button; `Sidebar` renders only the "Back to Dashboard" link and nav items — no brand block. This applies to all three verticals identically (shared component, no per-vertical branching).
+- **Currency is ₹ (Indian Rupees) sitewide** — Grocery, Medical, and Electronics all format money via `formatCurrency` in `lib/utils/formatters.ts` (`Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" })`). Never hardcode `$`/`USD`/a dollar sign in a page, component, or form label — route every currency value through `formatCurrency`.
+- **Demo/mock data uses an Indian context sitewide** — customers, suppliers/vendors, contact names, phone numbers (`+91 XXXXX-XXXXX`), and addresses (city/state/PIN) across all three verticals reflect Indian names and geography, consistent with the ₹ currency. Product/medicine names, brands, and barcodes (GS1 India `890` prefix) should stay India-appropriate. Preserve existing IDs and foreign-key relationships when editing seed data — only display fields (names/phones/addresses) change; a denormalized name copy (e.g. a sale's `customerName`) must always match the customer/supplier it references by id.
 
 # Route Architecture
 
@@ -65,6 +68,8 @@ All routes live under the Next.js App Router. Main dashboard at root; each verti
 /inventory/grocery/inventory
 /inventory/grocery/low-stock
 /inventory/grocery/expiry
+/inventory/grocery/stock-adjustments
+/inventory/grocery/wastage
 /inventory/grocery/reports
 
 /inventory/medical/dashboard
@@ -73,14 +78,14 @@ All routes live under the Next.js App Router. Main dashboard at root; each verti
 /inventory/medical/medicines
 /inventory/medical/categories
 /inventory/medical/manufacturers
-/inventory/medical/new-entry
-/inventory/medical/purchases
-/inventory/medical/sales
-/inventory/medical/inventory
-/inventory/medical/batches
-/inventory/medical/expiry
+/inventory/medical/purchases           Tabs: Purchase Orders / Purchases / Purchase Returns
+/inventory/medical/sales               Tabs: Sales / Sales Returns
 /inventory/medical/prescriptions
-/inventory/medical/reports
+/inventory/medical/inventory
+/inventory/medical/stock-adjustments
+/inventory/medical/batches
+/inventory/medical/low-stock
+/inventory/medical/expiry
 
 /inventory/electronics/dashboard
 /inventory/electronics/customers
@@ -122,23 +127,25 @@ app/
       inventory/page.tsx
       low-stock/page.tsx
       expiry/page.tsx
+      stock-adjustments/page.tsx
+      wastage/page.tsx
       reports/page.tsx
     medical/
-      layout.tsx                Medical shell: AppShell + medical nav + medical theme + MedicalDataProvider
-      dashboard/page.tsx
+      layout.tsx                Medical shell: AppShell + medical nav (grouped into sections) + medical theme + MedicalDataProvider
+      dashboard/page.tsx        Tab host (Overview / Reports / Analytics / Import-Export) — see components/medical/*Section.tsx
       customers/page.tsx
       suppliers/page.tsx
-      medicines/page.tsx
+      medicines/page.tsx        No "New Entry" route — adding a medicine is a "+ Add Medicine" action on this page
       categories/page.tsx
       manufacturers/page.tsx
-      new-entry/page.tsx
-      purchases/page.tsx
-      sales/page.tsx
-      inventory/page.tsx
-      batches/page.tsx
-      expiry/page.tsx
+      purchases/page.tsx        Tab host (Purchase Orders / Purchases / Purchase Returns) — see components/medical/*Section.tsx
+      sales/page.tsx            Tab host (Sales / Sales Returns) — see components/medical/*Section.tsx; FEFO-aware, links a completed sale to a pending prescription when applicable
       prescriptions/page.tsx
-      reports/page.tsx
+      inventory/page.tsx        Derived per-medicine view (total stock = SUM of active batch quantities)
+      stock-adjustments/page.tsx
+      batches/page.tsx          Real per-batch collection (medicine:batch is one-to-many)
+      low-stock/page.tsx        Derived filter of medicines where totalStock <= minimumStock
+      expiry/page.tsx           Batch-level, via lib/utils/medicalStock.ts wrapping the shared expiry helper
     electronics/
       layout.tsx                Electronics shell: AppShell + electronics nav + electronics theme + ElectronicsDataProvider
       dashboard/page.tsx
@@ -159,9 +166,19 @@ app/
 
 components/
   shared/
-    AppShell.tsx                Sidebar + Header + content wrapper, used by every vertical layout
-    Sidebar.tsx                 Renders nav items passed in via config
-    Header.tsx                  Top bar: page title, search, notifications, (no vertical switcher)
+    AppShell.tsx                Sidebar + Header + content wrapper, used by every vertical layout; passes
+                                 `verticalLabel`/`verticalEmoji` through to Header (not Sidebar) and an
+                                 optional `notificationPanel` prop through to Header (no vertical switcher)
+    Sidebar.tsx                 Renders nav items passed in via config only — no vertical branding (icon/
+                                 name) here, that lives in the header; fixed/sticky on desktop (lg:), only
+                                 its own nav list scrolls internally if it overflows — main content scrolls
+                                 independently
+    Header.tsx                  Top bar: vertical branding (emoji + label, via optional `verticalLabel`/
+                                 `verticalEmoji` props), page title, search, notification bell (opens the
+                                 optional `notificationPanel` node as a dropdown when supplied; static
+                                 otherwise)
+    Tabs.tsx                    Generic tab bar (config-driven: {value,label}[]) for consolidating related
+                                 pages under one route, selected via a `?tab=` query param
     StatCard.tsx
     DataTable.tsx                Generic table: columns config + rows
     SearchBar.tsx
@@ -180,9 +197,15 @@ components/
     VerticalCard.tsx             Grocery/Medical/Electronics entry card on main dashboard
     PlatformStats.tsx
   grocery/
-    ExpiryBadge.tsx, WeightUnitLabel.tsx, BarcodeDisplay.tsx, etc.
+    ExpiryBadge.tsx, WeightUnitLabel.tsx, BarcodeDisplay.tsx, StockAdjustmentForm.tsx, etc.
   medical/
-    BatchBadge.tsx, PrescriptionRequiredBadge.tsx, MRPDisplay.tsx, GenericNameField.tsx, etc.
+    MedicineForm.tsx, PurchaseForm.tsx, PurchaseOrderForm.tsx, ReceivePOForm.tsx, SaleForm.tsx,
+    SalesReturnForm.tsx, PurchaseReturnForm.tsx, StockAdjustmentForm.tsx, PrescriptionForm.tsx,
+    CustomerForm.tsx, SupplierForm.tsx, MedicalExpiryBadge.tsx, PrescriptionRequiredBadge.tsx,
+    PurchasesSection.tsx, PurchaseOrdersSection.tsx, PurchaseReturnsSection.tsx (tabs under /purchases),
+    SalesSection.tsx, SalesReturnsSection.tsx (tabs under /sales),
+    DashboardOverview.tsx, ReportsSection.tsx, AnalyticsSection.tsx, ImportExportSection.tsx
+      (tabs under /dashboard), NotificationsPanel.tsx (rendered in the header bell's dropdown, not a route)
   electronics/
     SerialNumberField.tsx, IMEIField.tsx, WarrantyBadge.tsx, ModelSpecList.tsx, etc.
 
@@ -193,8 +216,8 @@ lib/
     medical.ts                  Extends shared types with medical-specific fields
     electronics.ts              Extends shared types with electronics-specific fields
   mock-data/
-    grocery/  (products.ts, customers.ts, vendors.ts, categories.ts, brands.ts, purchases.ts, sales.ts)
-    medical/  (medicines.ts, customers.ts, suppliers.ts, manufacturers.ts, batches.ts, purchases.ts, sales.ts, prescriptions.ts)
+    grocery/  (products.ts, customers.ts, vendors.ts, categories.ts, brands.ts, purchases.ts, sales.ts, adjustments.ts)
+    medical/  (medicines.ts, batches.ts, customers.ts, suppliers.ts, categories.ts, manufacturers.ts, purchaseOrders.ts, purchases.ts, sales.ts, salesReturns.ts, purchaseReturns.ts, stockAdjustments.ts, prescriptions.ts)
     electronics/ (products.ts, customers.ts, vendors.ts, brands.ts, models.ts, purchases.ts, sales.ts, serials.ts)
   data/
     groceryRepository.ts        getProducts/addProduct/updateProduct/deleteProduct/etc. — future API swap point
@@ -205,10 +228,19 @@ lib/
     MedicalDataProvider.tsx
     ElectronicsDataProvider.tsx
   config/
-    navigation.ts                Per-vertical nav item arrays: { label, href, icon }
+    navigation.ts                Per-vertical nav item arrays: { label, href, icon, section? } — `section`
+                                  is optional; a vertical that omits it on every item renders as a flat
+                                  list (Grocery, Electronics), one that sets it on every item renders
+                                  grouped with section headers (Medical)
     theme.ts                     Per-vertical accent color tokens
   utils/
-    formatters.ts, id.ts, filters.ts, etc.
+    formatters.ts                 `formatCurrency` — all three verticals display currency in ₹ (Indian
+                                   Rupees) via this shared helper
+                                   (`Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" })`);
+                                   also id.ts, filters.ts, expiry.ts (shared expiry-status helper, all verticals), etc.
+    medicalStock.ts               Medical-only: derives a medicine's total stock/low-stock/expiry status
+                                   from its batches — never duplicate this logic in a page or component
+    medicalFefo.ts                Medical-only: pure First-Expiry-First-Out batch allocation helper
 ```
 
 # Component Architecture
@@ -220,19 +252,147 @@ lib/
 
 # Grocery Architecture
 
-**Nav/pages:** Dashboard, Customers, Vendors, Products, Categories, Brands, New Entry, Purchases, Sales, Inventory, Low Stock, Expiry, Reports.
+**Nav/pages:** Dashboard, Customers, Vendors, Products, Categories, Brands, New Entry, Purchases, Sales, Inventory, Low Stock, Expiry, Stock Adjustments, Wastage, Reports.
 
-**Domain concepts / fields:** unit of measure (Kg, Gram, Litre, Packet, Piece), weight/volume, expiry date, barcode, stock level, low-stock threshold.
+**Domain concepts / fields:** unit of measure (Kg, Gram, Litre, Packet, Piece), weight/volume, expiry date, barcode, stock level, low-stock threshold, stock adjustments (increase/decrease with a reason — Damaged, Lost, Wastage, Stock Count, Manual Correction) that mutate a product's stock and back the Wastage view.
+
+**Data flow:** Products, Purchases, Sales, and Stock Adjustments all live in one `GroceryState` (see State Management). Completing a Purchase increases the relevant products' `stockQty`; completing a Sale decreases it (blocked client-side if it would exceed available stock); a Stock Adjustment applies its +/- delta directly. Inventory, Low Stock (`stockQty <= reorderLevel`), Expiry (via the shared `lib/utils/expiry.ts` helper), Wastage (adjustments filtered to decrease + Damaged/Wastage reasons), Dashboard, and Reports are all derived from this same state on every render — none of them hold separate data.
 
 **Mock data theme:** Rice, Sugar, Salt, Cooking Oil, Milk, Bread, Biscuits, Flour, and similar everyday grocery SKUs, with realistic units, prices, and stock counts.
 
 # Medical Architecture
 
-**Nav/pages:** Dashboard, Customers, Suppliers, Medicines, Categories, Manufacturers, New Entry, Purchases, Sales, Inventory, Batches, Expiry, Prescriptions, Reports.
+**Nav/pages (grouped sections in the sidebar):**
+- Dashboard
+- Masters: Customers, Suppliers, Medicines, Categories, Manufacturers
+- Purchasing: Purchases
+- Sales: Sales, Prescriptions
+- Inventory: Inventory, Stock Adjustments, Batches, Low Stock, Expiry
 
-**Domain concepts / fields:** generic name, manufacturer, batch number, manufacturing date, expiry date, MRP, prescription-required flag, medicine category.
+The sidebar has **no dropdowns, expandable groups, or nested navigation** — `MASTERS`, `PURCHASING`,
+`SALES`, and `INVENTORY` are plain visual section-header labels (rendered by `Sidebar.tsx`'s
+`groupBySection`) above flat, directly clickable links. There is no "New Entry" route for Medical. Adding
+a medicine, customer, supplier, etc. is a contextual "+ Add" action on that entity's own page (e.g.
+"+ Add Medicine" on Medicines), not a separate nav item. Barcode is a field on `MedicalMedicine` plus a
+search predicate on the Medicines page — not its own route.
 
-**Mock data theme:** Paracetamol, Amoxicillin, Vitamin tablets, Cough syrup, and similar realistic pharmacy SKUs, with batch/expiry data.
+**Consolidated pages (tabs, not sidebar items):** Purchase Orders, Purchase Returns, Sales Returns,
+Reports, Analytics, Import/Export, and Notifications no longer have their own nav item or route. Instead:
+- `/inventory/medical/purchases` hosts a `Tabs` bar — Purchase Orders / Purchases / Purchase Returns
+  (`?tab=purchase-orders|purchases|purchase-returns`, default Purchases) — rendering
+  `components/medical/PurchaseOrdersSection.tsx` / `PurchasesSection.tsx` / `PurchaseReturnsSection.tsx`.
+- `/inventory/medical/sales` hosts a `Tabs` bar — Sales / Sales Returns (`?tab=sales|sales-returns`,
+  default Sales) — rendering `components/medical/SalesSection.tsx` / `SalesReturnsSection.tsx`.
+  `Prescriptions` remains its own separate sidebar item and route.
+- `/inventory/medical/dashboard` hosts a `Tabs` bar — Overview / Reports / Analytics / Import & Export
+  (`?tab=overview|reports|analytics|import-export`, default Overview) — rendering
+  `components/medical/DashboardOverview.tsx` / `ReportsSection.tsx` / `AnalyticsSection.tsx` /
+  `ImportExportSection.tsx`.
+- Notifications have no page at all: `components/medical/NotificationsPanel.tsx` renders the same derived
+  alert list inside a dropdown opened from the header bell (`AppShell`/`Header`'s `notificationPanel`
+  prop), wired up in `app/inventory/medical/layout.tsx`.
+- When adding a genuinely new Medical page, default to a new tab on the closest existing consolidated
+  page (Purchasing/Sales/Dashboard) rather than a new top-level nav item, unless it doesn't fit any of
+  them.
+
+## Medicine vs. Batch — the core data model
+
+Medical distinguishes **Medicine** (master/catalog data) from **Batch** (a specific received stock lot):
+
+- `MedicalMedicine` (`lib/types/medical.ts`) holds only catalog fields: name, genericName, brandName,
+  sku, barcode, categoryId, manufacturerId, dosageForm, strength, packSize, unit, purchasePrice,
+  sellingPrice, mrp, minimumStock, prescriptionRequired, active. **It does not extend `BaseProduct`** and
+  has **no `stockQty` or `expiryDate` field** — those are batch-specific and must never be reintroduced
+  onto the medicine.
+- `MedicalBatch` holds the stock-bearing fields: medicineId, batchNumber, manufacturingDate, expiryDate,
+  quantity, purchasePrice, mrp, supplierId, date. A medicine can have any number of batches.
+- **A medicine's total stock is always `SUM(quantity)` over its batches with `quantity > 0`** — computed
+  on every render via `getMedicineTotalStock(batches, medicineId)` in `lib/utils/medicalStock.ts`. This
+  value is never stored on the medicine or cached anywhere. The same file exposes `isLowStock`,
+  `getMedicineActiveBatches`, `getBatchExpiryStatus` (a thin wrapper around the shared
+  `lib/utils/expiry.ts` helper — never fork that logic), and `getExpiringOrExpiredBatches` (excludes
+  batches with `quantity <= 0`, since exhausted batches are not active inventory).
+
+## FEFO (First-Expiry-First-Out)
+
+`lib/utils/medicalFefo.ts` exports `allocateFefo(batches, medicineId, requestedQty)`, a pure function that
+sorts the medicine's active batches by `expiryDate` ascending and greedily allocates the requested
+quantity earliest-expiry-first, returning the per-batch allocations plus any shortfall. This is the
+**only** place FEFO logic may live — `SaleForm` calls it for a live pre-submit shortfall preview, and
+`lib/data/medicalRepository.ts` calls it again at commit time inside `addSale`/`updateSaleStatus` (never
+trusting a stale client-computed allocation). A sale's line items record which batches were drawn from
+via `batchAllocations: { batchId, batchNumber, quantity }[]`.
+
+## Purchase Order → Purchase → Batch → Inventory flow
+
+- A `MedicalPurchaseOrder` has status `draft | pending | received | cancelled` and **never affects
+  stock**, regardless of status, until it is received.
+- **Receiving** a PO (`receivePurchaseOrder` in the repository) builds a completed `MedicalPurchase` from
+  the batch details entered at receipt time and routes it through the exact same `addPurchase` /
+  batch-upsert path a direct Purchase uses (`upsertBatchOnReceipt`) — so there is only one code path that
+  ever creates or increases a batch, whether stock arrived via a PO or a direct Purchase entry.
+- A direct `MedicalPurchase` only creates/updates a batch when `status === "completed"` (a `pending`
+  purchase does not move stock, matching Grocery's purchase semantics).
+- `upsertBatchOnReceipt` matches an existing batch by `(medicineId, batchNumber)`: if found it increases
+  that batch's quantity and refreshes its price/expiry/supplier; otherwise it creates a new batch.
+
+## Sale flow (FEFO + prescription-aware)
+
+A completed sale calls `allocateFefo` per line item, decrements the allocated batches, and stamps
+`batchAllocations` onto the sale record — this is the only way batch stock decreases from a sale. Selling
+a `prescriptionRequired` medicine surfaces a banner in `SaleForm` requiring either a linked pending
+prescription (from `MedicalPrescription`) or an explicit walk-in override checkbox. **A prescription is
+only marked `fulfilled` by the explicit `fulfillPrescription(prescriptionId, saleId)` action fired when a
+sale with a linked prescription is submitted — never automatically, and never merely by viewing the
+prescription.** `MedicalPrescription.fulfilledBySaleId` records which sale fulfilled it.
+
+## Returns and Stock Adjustments
+
+- **Sales Returns** (`addSalesReturn`) restock into the batch the original sale drew from (via its
+  `batchAllocations[0]`) if that batch still exists; otherwise the medicine's latest-expiry active batch;
+  otherwise a synthetic `RETURN-<saleId>` batch is created so returned stock is never silently lost.
+- **Purchase Returns** (`addPurchaseReturn`) decrease a named batch's quantity, clamped at 0, and can
+  never exceed that batch's available quantity (the form caps the input).
+- **Stock Adjustments** (`addStockAdjustment`) increase/decrease a specific batch's quantity (clamped at
+  0) with a reason (Damaged, Expired, Lost, Manual Correction, Stock Count, Other). If no `batchId` is
+  given and the medicine has more than one (or zero) active batches, the adjustment is recorded but does
+  **not** guess a batch to mutate — guessing would corrupt FEFO ordering.
+
+All three of the above are **derived-state mutators, never separate stock records** — Inventory, Low
+Stock, Expiry, Dashboard, Reports, Analytics, and Notifications all recompute from the same
+`medicines`/`batches` arrays afterward; none of them read a purchase/sale/return/adjustment total as if it
+were an independent stock figure.
+
+## Derived views — no duplicated datasets
+
+Inventory, Low Stock, Expiry, Dashboard stats, Reports, Analytics, and Notifications are **always**
+computed live from `medicines`, `batches`, `purchaseOrders`, `purchases`, `sales`, `salesReturns`,
+`purchaseReturns`, `stockAdjustments`, `prescriptions`, `customers`, and `suppliers` — never from a
+separate stored dataset. Do not create files like `medicalInventoryData.ts`, `medicalLowStockData.ts`,
+`medicalExpiryData.ts`, or `medicalDashboardStats.ts` — if a new page needs a new aggregate, add a pure
+derivation function (in `lib/utils/medicalStock.ts` or inline in the page) over the existing state.
+
+## LocalStorage schema note
+
+`MedicalState` grew additive array fields (`batches`, `purchaseOrders`, `salesReturns`,
+`purchaseReturns`, `stockAdjustments`) on top of the original shape. `STORAGE_VERSION` was **not**
+bumped for this change — the existing `HYDRATE` reducer case (`{ ...getInitialMedicalState(),
+...action.state }`) already backfills any array missing from an older persisted payload, which is exactly
+what an additive schema change like this needs. `MedicalMedicine` also **dropped**
+`stockQty`/`expiryDate`/`batchNumber`; any of those fields lingering on old persisted medicine records are
+inert (nothing reads them) and are harmless to leave in place. If a future Medical schema change ever
+*removes or renames* a field that old data still needs to satisfy new required logic, add an explicit
+migration step in `MedicalDataProvider`'s hydration effect rather than relying on the merge trick or
+bumping the storage version (which would silently discard all persisted Medical data).
+
+**Mock data theme:** Paracetamol, Amoxicillin, Vitamin tablets, Cough syrup, and similar realistic
+pharmacy SKUs, now split across `medicines.ts` (catalog) and `batches.ts` (stock lots, with a deliberate
+mix of expired/expiring-soon/healthy batches, some medicines with only one batch, and at least one
+medicine with zero batches to exercise the out-of-stock state). Manufacturers (Cipla, Sun Pharma, GSK,
+Abbott, Dr. Reddy's) and medicine barcodes (GS1 India `890` prefix) already reflect an Indian pharmacy
+context; `customers.ts` and `suppliers.ts` use Indian names, `+91` phone numbers, and Indian
+city/state/PIN addresses — keep new Medical seed data consistent with this Indian pharmacy setting, and
+currency throughout Medical is ₹ (see `lib/utils/formatters.ts`'s `formatCurrency`), not $.
 
 # Electronics Architecture
 
@@ -250,6 +410,12 @@ Rules:
 - Every shared component is vertical-agnostic and driven entirely by props/config.
 - Accent color is applied via a CSS variable set by the active vertical's layout, not hardcoded into the component.
 - New cross-vertical UI needs (e.g. a new kind of card) go into `components/shared/`; anything that only one vertical will ever use goes into that vertical's component folder.
+- `Sidebar`/`navigation.ts` support an optional `section?: string` on `NavItem` for grouped sidebars
+  (used by Medical today); omitting it on every item (Grocery, Electronics) renders the original flat
+  list unchanged.
+- `ChartWrapper` supports an optional `type?: "bar" | "line" | "pie"` (default `"bar"`, used by Medical's
+  Analytics page for trend lines and distribution pies); omitting it keeps the original bar-chart-only
+  behavior Grocery and Electronics already rely on.
 
 # Mock Data Strategy
 
@@ -364,3 +530,4 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
